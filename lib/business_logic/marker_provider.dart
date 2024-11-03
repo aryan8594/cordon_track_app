@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:developer';
+import 'package:cordon_track_app/business_logic/map_controller_provider.dart';
 import 'package:cordon_track_app/data/repositories/live_vehicle_api.dart';
 import 'package:cordon_track_app/presentation/pages/live_map_page.dart';
 import 'package:flutter/widgets.dart';
@@ -15,9 +16,9 @@ final markerProvider = StateNotifierProvider<MarkerNotifier, Set<Marker>>((ref) 
 });
 final selectedVehicleIdProvider = StateProvider<String?>((ref) => null);
 
-final mapControllerProvider = Provider<Completer<GoogleMapController>>((ref) {
-  return Completer<GoogleMapController>();
-});
+// final mapControllerProvider = Provider<Completer<GoogleMapController>>((ref) {
+//   return Completer<GoogleMapController>();
+// });
 
 class MarkerNotifier extends StateNotifier<Set<Marker>> {
   final Ref ref;
@@ -91,18 +92,20 @@ class MarkerNotifier extends StateNotifier<Set<Marker>> {
               onMarkerTap(context, vehicle.id!);
               log("${ref.read(selectedVehicleIdProvider)} selected");
 
-                final GoogleMapController controller = await ref.read(mapControllerProvider).future;
-                if (controller != null) {
-                  controller.animateCamera(CameraUpdate.newLatLngZoom(newPosition, 15));
-                }
+                final controller = await ref.read(mapControllerProvider.notifier).getController();
 
+                  if (mounted) {
+                      controller.animateCamera(CameraUpdate.newLatLngZoom(newPosition, 15));
+                    }
+
+            
               
             },
           );
           updatedMarkers[vehicle.id!] = newMarker;
         }
         // Update the camera position for the selected vehicle
-        if (ref.read(selectedVehicleIdProvider.notifier).state == vehicle.id) {
+        if (ref.read(selectedVehicleIdProvider.notifier).state == vehicle.id && mounted) {
         // If the selected vehicle, update the camera position
         
             // if (context.mounted) {
@@ -113,7 +116,7 @@ class MarkerNotifier extends StateNotifier<Set<Marker>> {
 
             Future.delayed(Duration(milliseconds: 2000), () async {
               try {
-                final controller = await ref.read(mapControllerProvider).future;
+                final controller = await ref.read(mapControllerProvider.notifier).getController();
                 if (controller != null) {
                   await controller.animateCamera(CameraUpdate.newLatLng(newPosition));
                 }

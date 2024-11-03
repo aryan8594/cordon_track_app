@@ -3,6 +3,7 @@
 import 'dart:async';
 import 'dart:developer';
 
+import 'package:cordon_track_app/business_logic/map_controller_provider.dart';
 import 'package:cordon_track_app/business_logic/marker_provider.dart';
 import 'package:cordon_track_app/business_logic/search_query_provider.dart';
 import 'package:cordon_track_app/data/models/live_vehicle_model.dart';
@@ -20,7 +21,7 @@ void navigateToVehicle(WidgetRef ref, Data vehicle) async {
     final position = LatLng(double.parse(vehicle.latitude!), double.parse(vehicle.longitude!));
 
 
-  final GoogleMapController controller = await ref.read(mapControllerProvider).future;
+  final controller = await ref.read(mapControllerProvider.notifier).getController();
   await controller.animateCamera(CameraUpdate.newLatLngZoom(position, 16));
 
 

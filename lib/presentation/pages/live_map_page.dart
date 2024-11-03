@@ -2,6 +2,7 @@
 
 import 'dart:developer';
 
+import 'package:cordon_track_app/business_logic/map_controller_provider.dart';
 import 'package:cordon_track_app/business_logic/navigate_to_search_provider.dart';
 import 'package:cordon_track_app/business_logic/search_query_provider.dart';
 import 'package:cordon_track_app/data/data_providers/live_vehicle_provider.dart';
@@ -50,7 +51,9 @@ class _LiveMapPageState extends ConsumerState<LiveMapPage> {
   @override
   void dispose() {
     _updateTimer?.cancel();
-
+    if (!mounted) {
+  ref.read(mapControllerProvider.notifier).disposeController();
+}
     super.dispose();
   }
 
@@ -61,6 +64,8 @@ class _LiveMapPageState extends ConsumerState<LiveMapPage> {
     final markers = ref.watch(markerProvider); 
     final filteredVehicles = ref.watch(filteredVehiclesProvider);
     final isSearchVisible = ref.watch(isSearchVisibleProvider);
+    final selectedVehicleId = ref.watch(selectedVehicleIdProvider);
+
     // final mapController = ref.read(mapControllerProvider);
 
     return Scaffold(
@@ -77,10 +82,7 @@ class _LiveMapPageState extends ConsumerState<LiveMapPage> {
             onMapCreated: (controller) {
                 controller.setMapStyle(Utils.mapStyles);
 
-                  if (!ref.read(mapControllerProvider).isCompleted) {
-                    ref.read(mapControllerProvider).complete(controller);
-                  }
-                  log("map controller created");
+                  ref.read(mapControllerProvider.notifier).setController(controller);
 
               
 
