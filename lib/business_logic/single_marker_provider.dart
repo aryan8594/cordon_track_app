@@ -12,8 +12,8 @@ import 'package:cordon_track_app/data/models/live_vehicle_model.dart';
 import '../presentation/widgets/vehicle_info_sheet.dart';
 
 
-final markerProvider = StateNotifierProvider<MarkerNotifier, Set<Marker>>((ref) {
-  return MarkerNotifier(ref);
+final singleMarkerProvider = StateNotifierProvider<SingleMarkerNotifier, Set<Marker>>((ref) {
+  return SingleMarkerNotifier(ref);
 });
 // final selectedVehicleIdProvider = StateProvider<String?>((ref) => null);
 
@@ -21,9 +21,9 @@ final markerProvider = StateNotifierProvider<MarkerNotifier, Set<Marker>>((ref) 
 //   return Completer<GoogleMapController>();
 // });
 
-class MarkerNotifier extends StateNotifier<Set<Marker>> {
+class SingleMarkerNotifier extends StateNotifier<Set<Marker>> {
   final Ref ref;
-  MarkerNotifier(this.ref) : super({}) {
+  SingleMarkerNotifier(this.ref) : super({}) {
 
   }
   Timer? _timer;

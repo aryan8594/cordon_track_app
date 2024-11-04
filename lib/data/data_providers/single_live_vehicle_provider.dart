@@ -5,22 +5,38 @@ import 'package:cordon_track_app/data/models/single_live_vehicle_model.dart';
 import 'package:cordon_track_app/data/repositories/single_live_vehicle_api.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+// Provider to manage the selected vehicle ID
+final selectedVehicleIdProvider = StateProvider<String?>((ref) => null);
 
-// Fetch vehicle data from API using the repository every 10 seconds
-final singleLiveVehicleProvider = StreamProvider.family<SingleLiveVehicleModel?, String>((ref, selectedVehicleID) {
+
+// Fetch vehicle data from API using the repository every 5 seconds
+final singleLiveVehicleProvider = StreamProvider.autoDispose.family<SingleLiveVehicleModel?, String>((ref, selectedVehicleID) {
   final repository = SingleLiveVehicleRepository();
   final controller = StreamController<SingleLiveVehicleModel?>();
 
-  // Make an immediate call
-  repository.fetchLiveVehicleData(selectedVehicleID).then(controller.add);
+  // Function to fetch and add data to the controller
+  Future<void> fetchData() async {
+    try {
+      final data = await repository.fetchLiveVehicleData(selectedVehicleID);
+      controller.add(data);
+    } catch (error) {
+      controller.addError(error);
+    }
+  }
 
-  // Periodic updates every 5 seconds
-  Stream.periodic(const Duration(seconds: 5), (_) async {
-    return await repository.fetchLiveVehicleData(selectedVehicleID);
-  }).asyncMap((event) => event).listen(controller.add);
+  // Initial fetch
+  fetchData();
 
-  // Close the stream when no longer in use
-  ref.onDispose(() => controller.close());
+  // Create a periodic timer
+  final timer = Timer.periodic(const Duration(seconds: 5), (_) {
+    fetchData();
+  });
+
+  // Ensure timer and stream controller are cleaned up when disposed
+  ref.onDispose(() {
+    timer.cancel();
+    controller.close();
+  });
 
   return controller.stream;
 });

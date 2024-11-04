@@ -16,7 +16,7 @@ class SingleLiveVehicleRepository  {
     );
 
     if (response.statusCode == 200) {
-      log("Live Single Vehicle Data fetched");
+      log("Live Single Vehicle Data fetched ${selectedVehicleID}");
       final jsonData = jsonDecode(response.body);
       return SingleLiveVehicleModel.fromJson(jsonData);
     } else {

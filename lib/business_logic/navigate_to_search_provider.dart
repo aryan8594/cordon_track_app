@@ -21,8 +21,10 @@ void navigateToVehicle(WidgetRef ref, Data vehicle) async {
     final position = LatLng(double.parse(vehicle.latitude!), double.parse(vehicle.longitude!));
 
 
-  final controller = await ref.read(mapControllerProvider.notifier).getController();
-  await controller.animateCamera(CameraUpdate.newLatLngZoom(position, 16));
+        final controller = ref.read(mapControllerProvider);
+        if (controller != null ) {
+        await controller.animateCamera(CameraUpdate.newLatLngZoom(position, 16));
+      }
 
 
 

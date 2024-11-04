@@ -1,4 +1,3 @@
-import 'package:cordon_track_app/presentation/pages/bottom_nav_bar.dart';
 import 'package:cordon_track_app/presentation/widgets/custom_nav_bar.dart';
 import 'package:cordon_track_app/presentation/pages/live_map_page.dart';
 import 'package:flutter/material.dart';

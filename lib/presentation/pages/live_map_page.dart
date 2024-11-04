@@ -7,6 +7,7 @@ import 'package:cordon_track_app/business_logic/navigate_to_search_provider.dart
 import 'package:cordon_track_app/business_logic/search_query_provider.dart';
 import 'package:cordon_track_app/data/data_providers/live_vehicle_provider.dart';
 import 'package:cordon_track_app/business_logic/marker_provider.dart';
+import 'package:cordon_track_app/data/data_providers/single_live_vehicle_provider.dart';
 import 'package:cordon_track_app/presentation/widgets/vehicle_info_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -52,8 +53,8 @@ class _LiveMapPageState extends ConsumerState<LiveMapPage> {
   void dispose() {
     _updateTimer?.cancel();
     if (!mounted) {
-  ref.read(mapControllerProvider.notifier).disposeController();
-}
+      ref.read(mapControllerProvider.notifier).disposeController();
+    }
     super.dispose();
   }
 
@@ -64,7 +65,7 @@ class _LiveMapPageState extends ConsumerState<LiveMapPage> {
     final markers = ref.watch(markerProvider); 
     final filteredVehicles = ref.watch(filteredVehiclesProvider);
     final isSearchVisible = ref.watch(isSearchVisibleProvider);
-    final selectedVehicleId = ref.watch(selectedVehicleIdProvider);
+    final selectedVehicleId = ref.read(selectedVehicleIdProvider);
 
     // final mapController = ref.read(mapControllerProvider);
 
@@ -74,6 +75,7 @@ class _LiveMapPageState extends ConsumerState<LiveMapPage> {
         children: [
           GoogleMap(
             key: const PageStorageKey('MapPage'),
+            zoomControlsEnabled : false,
             markers: markers,
             initialCameraPosition: const CameraPosition(
               target: LatLng(12.976692, 77.576249),
@@ -82,8 +84,8 @@ class _LiveMapPageState extends ConsumerState<LiveMapPage> {
             onMapCreated: (controller) {
                 controller.setMapStyle(Utils.mapStyles);
 
-                  ref.read(mapControllerProvider.notifier).setController(controller);
-
+                  ref.read(mapControllerProvider.notifier).initializeController(controller);
+                log("controller initalized");
               
 
               // ref.read(markerProvider.notifier).attachMapController(controller);

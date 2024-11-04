@@ -363,8 +363,8 @@ void resetVehicleId(String? vehicleId, Ref ref) async {
 
 
   if (vehicleId != null) {
-    // ref.watch(selectedVehicleIdProvider.notifier).state = null;
-    Future.microtask(() => ref.read(selectedVehicleIdProvider.notifier).state = null);
+    ref.watch(selectedVehicleIdProvider.notifier).state = null;
+    // Future.microtask(() => ref.read(selectedVehicleIdProvider.notifier).state = null);
     log("Vehicle ID reset to null: ${vehicleId}");
 
   }

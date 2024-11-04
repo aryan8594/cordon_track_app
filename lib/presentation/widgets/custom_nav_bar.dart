@@ -1,4 +1,5 @@
 import 'package:cordon_track_app/presentation/pages/live_map_page.dart';
+import 'package:cordon_track_app/presentation/pages/vehicle_search_list.dart';
 import 'package:flutter/material.dart';
 import 'package:custom_navigation_bar/custom_navigation_bar.dart';
 
@@ -16,7 +17,7 @@ class _CustomNavBarState extends State<CustomNavBar> {
   final List<Widget> _screens = [
 
     const Placeholder(),
-    const Placeholder(),
+    VehicleSearchList(),
     LiveMapPage(),
     const Placeholder(),
     const Placeholder()
