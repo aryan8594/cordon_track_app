@@ -20,7 +20,9 @@ final singleLiveVehicleProvider = StreamProvider.autoDispose.family<SingleLiveVe
       final data = await repository.fetchLiveVehicleData(selectedVehicleID);
       controller.add(data);
     } catch (error) {
-      controller.addError(error);
+      if (controller == null) {
+        controller.addError(error);
+      }
     }
   }
 

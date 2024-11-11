@@ -1,4 +1,6 @@
+
 import 'package:cordon_track_app/presentation/pages/single_live_map_page.dart';
+import 'package:cordon_track_app/presentation/pages/vehicle_history_page.dart';
 import 'package:flutter/material.dart';
 
 class TabBarWidget extends StatefulWidget {
@@ -33,8 +35,8 @@ class _TabBarWidgetState extends State<TabBarWidget> {
         body: TabBarView(
           physics: NeverScrollableScrollPhysics(),
           children: [
-            SingleLiveMapPage(specificVehicleID: widget.specificVehicleID),
-            Placeholder(),
+            SingleVehicleMapPage(vehicleId: widget.specificVehicleID),
+            VehicleHistoryPage(vehicleId: widget.specificVehicleID,),
             Placeholder(),
             Placeholder()
           ]

@@ -2,8 +2,11 @@ import 'dart:async';
 import 'dart:developer';
 import 'package:cordon_track_app/business_logic/map_controller_provider.dart';
 import 'package:cordon_track_app/data/data_providers/single_live_vehicle_provider.dart';
+import 'package:cordon_track_app/data/models/single_live_vehicle_model.dart';
 import 'package:cordon_track_app/data/repositories/live_vehicle_api.dart';
+import 'package:cordon_track_app/data/repositories/single_live_vehicle_api.dart';
 import 'package:cordon_track_app/presentation/pages/live_map_page.dart';
+import 'package:cordon_track_app/presentation/pages/single_live_map_page.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -12,18 +15,15 @@ import 'package:cordon_track_app/data/models/live_vehicle_model.dart';
 import '../presentation/widgets/vehicle_info_sheet.dart';
 
 
-final singleMarkerProvider = StateNotifierProvider<SingleMarkerNotifier, Set<Marker>>((ref) {
-  return SingleMarkerNotifier(ref);
+final singleMarkerProvider = StateNotifierProvider.family<SingleMarkerNotifier, Set<Marker>, String>((ref, selectecVehicleID) {
+  return SingleMarkerNotifier(ref, selectecVehicleID);
 });
-// final selectedVehicleIdProvider = StateProvider<String?>((ref) => null);
 
-// final mapControllerProvider = Provider<Completer<GoogleMapController>>((ref) {
-//   return Completer<GoogleMapController>();
-// });
 
 class SingleMarkerNotifier extends StateNotifier<Set<Marker>> {
   final Ref ref;
-  SingleMarkerNotifier(this.ref) : super({}) {
+  final String selectecVehicleID;
+  SingleMarkerNotifier(this.ref, this.selectecVehicleID) : super({}) {
 
   }
   Timer? _timer;
@@ -42,7 +42,7 @@ class SingleMarkerNotifier extends StateNotifier<Set<Marker>> {
   // Fetch vehicle data and update markers
   Future<void> updateMarkers(BuildContext context) async {
     try {
-      List<Data>? vehicles = await LiveVehicleRepository().fetchLiveVehicleData();
+      SingleLiveVehicleModel? vehicles = await SingleLiveVehicleRepository().fetchLiveVehicleData(selectecVehicleID);
 
       if (vehicles != null) {
         Set<Marker> updatedMarkers = await _generateMarkers(context, vehicles, ref);
@@ -55,12 +55,12 @@ class SingleMarkerNotifier extends StateNotifier<Set<Marker>> {
   }
 
   // Method to generate markers from the vehicle data
-  Future<Set<Marker>> _generateMarkers(BuildContext context, List<Data> vehicles, Ref ref) async {
+  Future<Set<Marker>> _generateMarkers(BuildContext context, SingleLiveVehicleModel vehicles, Ref ref) async {
      Map<String, Marker> updatedMarkers = {
       for (var marker in state) marker.markerId.value: marker
     }; // Existing markers
 
-    for (var vehicle in vehicles) {
+    for (var vehicle in vehicles.data!) {
       if (vehicle.latitude != null && vehicle.longitude != null) {
         LatLng newPosition = LatLng(double.parse(vehicle.latitude!),
             double.parse(vehicle.longitude!));
@@ -68,12 +68,12 @@ class SingleMarkerNotifier extends StateNotifier<Set<Marker>> {
             ? double.tryParse(vehicle.direction!) ?? 0.0
             : 0.0;
 
-        BitmapDescriptor newIcon = await setCustomMapPin(vehicle);
+        BitmapDescriptor newIcon = await setCustomMapPin(vehicles);
 
         // If the marker already exists, animate the position
         if (updatedMarkers.containsKey(vehicle.id!)) {
           Marker oldMarker = updatedMarkers[vehicle.id!]!;
-          _animateMarkerPosition(oldMarker, newPosition, vehicle, newIcon, updatedMarkers, ref);
+          _animateMarkerPosition(oldMarker, newPosition, vehicles, newIcon, updatedMarkers, ref);
         } else {
           // Create a new marker if it doesn't exist
           Marker newMarker = Marker(
@@ -88,38 +88,26 @@ class SingleMarkerNotifier extends StateNotifier<Set<Marker>> {
             ),
             rotation: rotation,
             onTap: () async {
-              //  ref.read(selectedVehicleIdProvider.notifier).state = vehicle.id;
-              // Set selected vehicle
-              onMarkerTap(context, vehicle.id!);
-              log("${ref.read(selectedVehicleIdProvider)} selected");
 
-                final controller = ref.read(mapControllerProvider);
+                    final controller = ref.read(mapControllerProvider);
 
                   if (controller != null ) {
                       controller.animateCamera(CameraUpdate.newLatLngZoom(newPosition, 15));
                     }
 
-            
-              
             },
           );
           updatedMarkers[vehicle.id!] = newMarker;
         }
         // Update the camera position for the selected vehicle
-        if (ref.read(selectedVehicleIdProvider.notifier).state == vehicle.id && mounted) {
-        // If the selected vehicle, update the camera position
-        
-            // if (context.mounted) {
-            //   log("camera moving GM ${ref.read(selectedVehicleIdProvider)}");
-            //   final GoogleMapController controller = await ref.read(mapControllerProvider).future;
-            //   controller.animateCamera(CameraUpdate.newLatLng(newPosition));
-            // }
+        if (mounted) {
 
             Future.delayed(Duration(milliseconds: 2000), () async {
               try {
                 final controller = ref.read(mapControllerProvider);
                 if (controller != null ) {
                   await controller.animateCamera(CameraUpdate.newLatLng(newPosition));
+                  log("camera moving");
                 }
               } catch (e) {
                 log('Error animating camera: $e');
@@ -134,7 +122,8 @@ class SingleMarkerNotifier extends StateNotifier<Set<Marker>> {
   }
 
   // Method to get or generate custom icons based on vehicle data
-  Future<BitmapDescriptor> setCustomMapPin(Data vehicle) async {
+  Future<BitmapDescriptor> setCustomMapPin(SingleLiveVehicleModel vehicles) async {
+  for (var vehicle in vehicles.data!) {
     String assetPath;
     double? speed = vehicle.speed != null ? double.tryParse(vehicle.speed!) : null;
     String gpsStatus = vehicle.gpsStatus?.toString() ?? '0';
@@ -148,11 +137,11 @@ class SingleMarkerNotifier extends StateNotifier<Set<Marker>> {
     }
 
     // Determine the asset path for the custom icon
-    if (stoppageSince!= null &&  stoppageSince > 10800) {
+    if (stoppageSince != null && stoppageSince > 10800) {
       assetPath = vehicle.vType == 'car' 
         ? 'lib/presentation/assets/cab_black.png' 
         : 'lib/presentation/assets/truck_black.png';
-    } else if (stoppageSince!= null &&  stoppageSince < 10800) {
+    } else if (stoppageSince != null && stoppageSince < 10800) {
       if (vehicle.vType == 'car' || vehicle.vType == null || vehicle.vType == 'Unknown' || vehicle.vType == '') {
         if (speed == null || speed == 0) {
           assetPath = 'lib/presentation/assets/cab_yellow.png';
@@ -176,111 +165,85 @@ class SingleMarkerNotifier extends StateNotifier<Set<Marker>> {
 
     // Create and cache the new icon
     BitmapDescriptor newIcon = await BitmapDescriptor.asset(
-      const ImageConfiguration(devicePixelRatio: 0.1, size: Size(15, 26.7)),
+      const ImageConfiguration(devicePixelRatio: 0.1, size: Size(25, 45)),
       assetPath,
     );
     _iconCache[key] = newIcon; // Cache the icon for future use
     return newIcon;
   }
 
+  // If no vehicles are in the list or no conditions are met, return a default icon
+  return BitmapDescriptor.defaultMarker;
+}
+
+
+
   // Helper to animate marker position smoothly
   void _animateMarkerPosition(
       Marker oldMarker,
       LatLng newPosition,
-      Data vehicle,
+      SingleLiveVehicleModel vehicle,
       BitmapDescriptor newIcon,
       Map<String, Marker> markersMap,
       Ref ref
       ) {
     // if (isDisposed) return;
-    const int steps = 10;
-    const int animationDuration = 5000;
-
-    double startLat = oldMarker.position.latitude;
-    double startLng = oldMarker.position.longitude;
-    double endLat = newPosition.latitude;
-    double endLng = newPosition.longitude;
-
-    Timer.periodic(
-        const Duration(milliseconds: animationDuration ~/ steps), (timer) async {
-      double t = timer.tick / steps;
-      double currentLat = _lerp(startLat, endLat, t);
-      double currentLng = _lerp(startLng, endLng, t);
-      LatLng interpolatedPosition = LatLng(currentLat, currentLng);
-
-      // Parse and apply the vehicle's direction for rotation
-      double rotation = vehicle.direction != null
-          ? double.tryParse(vehicle.direction!) ?? 0.0
-          : 0.0;
-
-      // Update the position, rotation, and icon of the marker
-      markersMap[oldMarker.markerId.value] = oldMarker.copyWith(
-        positionParam: interpolatedPosition,
-        rotationParam: rotation,
-        iconParam: newIcon,
-        infoWindowParam: InfoWindow(
-          anchor: const Offset(0.5, 0.5),
-          title: vehicle.rto ?? 'Unknown RTO',
-          snippet: 'Speed: ${vehicle.speed ?? 'N/A'} km/h',
-          onTap: () async {
-            // final GoogleMapController controller = await ref.read(mapControllerProvider).future;
-            // controller.animateCamera(CameraUpdate.newLatLngZoom(newPosition, 15));
-          },
-        ),
-      );
-
-      // Update the state after each step
-      if (mounted) {
-        state = markersMap.values.toSet();
-      }
-
-      // End the animation after the final step
-      if (timer.tick >= steps) {
-        timer.cancel();
-        
-
-        //  if (ref.read(selectedVehicleIdProvider.notifier).state == vehicle.id) {
-        //       // If the selected vehicle, update the camera position
-        //           log("camera moving AM ${ref.read(selectedVehicleIdProvider)}");
-        //           final GoogleMapController controller = await ref.read(mapControllerProvider).future;
-        //           controller.animateCamera(CameraUpdate.newLatLng(newPosition));
-        // }
-        
-
-      }
-    });
+    for (var vehicle in vehicle.data!) {
+  const int steps = 10;
+  const int animationDuration = 5000;
+  
+  double startLat = oldMarker.position.latitude;
+  double startLng = oldMarker.position.longitude;
+  double endLat = newPosition.latitude;
+  double endLng = newPosition.longitude;
+  
+  Timer.periodic(
+      const Duration(milliseconds: animationDuration ~/ steps), (timer) async {
+    double t = timer.tick / steps;
+    double currentLat = _lerp(startLat, endLat, t);
+    double currentLng = _lerp(startLng, endLng, t);
+    LatLng interpolatedPosition = LatLng(currentLat, currentLng);
+  
+    // Parse and apply the vehicle's direction for rotation
+    double rotation = vehicle.direction != null
+        ? double.tryParse(vehicle.direction!) ?? 0.0
+        : 0.0;
+  
+    // Update the position, rotation, and icon of the marker
+    markersMap[oldMarker.markerId.value] = oldMarker.copyWith(
+      positionParam: interpolatedPosition,
+      rotationParam: rotation,
+      iconParam: newIcon,
+      infoWindowParam: InfoWindow(
+        anchor: const Offset(0.5, 0.5),
+        title: vehicle.rto ?? 'Unknown RTO',
+        snippet: 'Speed: ${vehicle.speed ?? 'N/A'} km/h',
+        onTap: () async {
+          // final GoogleMapController controller = await ref.read(mapControllerProvider).future;
+          // controller.animateCamera(CameraUpdate.newLatLngZoom(newPosition, 15));
+        },
+      ),
+    );
+  
+    // Update the state after each step
+    if (mounted) {
+      state = markersMap.values.toSet();
+    }
+  
+    // End the animation after the final step
+    if (timer.tick >= steps) {
+      timer.cancel();
+      
+    }
+  });
+}
   }
 
   double _lerp(double start, double end, double t) {
     return start + (end - start) * t;
   }
 
-  // Helper to move the camera to the vehicle's position
-  //   Future<void> _updateCameraPosition(LatLng newPosition) async {
-  //     if (ref.read(selectedVehicleIdProvider.notifier).state != null ) {
-  //   final GoogleMapController controller = await ref.read(mapControllerProvider).future;
-  //   controller.animateCamera(CameraUpdate.newLatLng(newPosition));
-  // }
-  //   }
 
-  // Attach the GoogleMap controller
-    // void attachMapController(GoogleMapController controller) {
-    //   final mapControllerCompleter = ref.watch(mapControllerProvider);
-
-    //   if (mapControllerCompleter.isCompleted) {
-    //     mapControllerCompleter.complete(controller);
-    //   }
-    // }
-
-
-  void onMarkerTap(BuildContext context, String vehicleId) {
-    if (context.mounted) {
-    ref.watch(selectedVehicleIdProvider.notifier).state = vehicleId;
-    showVehicleTopModalSheet(context, vehicleId, ref);
-    showVehicleInfoModal(context, vehicleId, ref);
-    }
-
-  }
 }
 
 

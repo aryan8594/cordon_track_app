@@ -44,6 +44,9 @@ dependencies:
   flutter_datetime_picker_plus: ^2.2.0
   flutter_riverpod: ^2.6.1
   custom_navigation_bar: ^0.8.2
+  backdrop: ^0.9.1
+  board_datetime_picker: ^2.1.5
+  we_slide: ^2.4.0
 
 dev_dependencies:
   flutter_test:
@@ -77,6 +80,11 @@ flutter:
     - lib/presentation/assets/truck_green.png
     - lib/presentation/assets/truck_red.png
     - lib/presentation/assets/truck_yellow.png
+    - lib/presentation/assets/cordon_logo_1.png
+    - lib/presentation/assets/cordon_logo_2.png
+    - lib/presentation/assets/cordon_logo_3.png
+    - lib/presentation/assets/arrow_black.png
+
   #   - images/a_dot_ham.jpeg
 
   # An image asset can refer to one or more resolution-specific "variants", see

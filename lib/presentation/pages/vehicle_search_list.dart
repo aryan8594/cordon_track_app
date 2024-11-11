@@ -10,6 +10,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 class VehicleSearchList extends ConsumerWidget {
   const VehicleSearchList({Key? key}) : super(key: key);
 
+  
+
   String convertSecondsToHoursMinutes(String secondsString) {
       // Convert the string to an integer
       int totalSeconds = int.tryParse(secondsString) ?? 0;
@@ -81,14 +83,37 @@ class VehicleSearchList extends ConsumerWidget {
                                     :vehicle.vType == "truck"
                                     ?const Icon(Icons.fire_truck, color: Colors.blue)
                                     :const Icon(Icons.directions_car, color: Colors.blue),
-                                    title: Text(
-                                      vehicle.rto ?? "Unknown Vehicle",
-                                      style: const TextStyle(fontWeight: FontWeight.bold),
+                                    title: FittedBox(
+                                      alignment: Alignment.centerLeft,
+                                      fit: BoxFit.scaleDown,
+                                      child: Row(
+                                        mainAxisAlignment: MainAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            vehicle.rto ?? "Unknown Vehicle",
+                                            style: const TextStyle(fontWeight: FontWeight.bold),
+                                          ),
+                                          
+                                        ],
+                                      ),
                                     ),
                                     subtitle: Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
-                                        Text("ID: ${vehicle.id ?? "Unknown"}"),
+                                        Row(
+                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Text("ID: ${vehicle.id ?? "Unknown"}"),
+                                            vehicle.externalBatteryVoltage == null
+                                            ?SizedBox()
+                                            :Row(
+                                            children: [
+                                              Icon(Icons.battery_charging_full_rounded, size: 18,),
+                                              Text("${vehicle.externalBatteryVoltage} v", style: TextStyle(fontSize: 15),)
+                                            ],
+                                          )
+                                          ],
+                                        ),
                                         vehicle.idleSince != "0"
                                         ?Text("Idle Since: ${convertSecondsToHoursMinutes(vehicle.idleSince!)}", style: TextStyle(color: Colors.yellow),)
                                         :vehicle.stoppageSince != "0"
@@ -121,6 +146,7 @@ class VehicleSearchList extends ConsumerWidget {
                                     :Text("ON",style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Colors.green)),
                                   ],
                                 ),
+                                
                                 Column(
                                   crossAxisAlignment: CrossAxisAlignment.center,
                                   children: [
