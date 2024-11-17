@@ -106,7 +106,8 @@ class MarkerNotifier extends StateNotifier<Set<Marker>> {
           updatedMarkers[vehicle.id!] = newMarker;
         }
         // Update the camera position for the selected vehicle
-        if (ref.read(selectedVehicleIdProvider.notifier).state == vehicle.id && mounted) {
+        Future.microtask(() {
+                if (ref.read(selectedVehicleIdProvider.notifier).state == vehicle.id && mounted) {
         // If the selected vehicle, update the camera position
         
             // if (context.mounted) {
@@ -127,6 +128,8 @@ class MarkerNotifier extends StateNotifier<Set<Marker>> {
             });
 
         }
+                });
+        
       }
     }
 
@@ -275,7 +278,10 @@ class MarkerNotifier extends StateNotifier<Set<Marker>> {
 
   void onMarkerTap(BuildContext context, String vehicleId) {
     if (context.mounted) {
-    ref.watch(selectedVehicleIdProvider.notifier).state = vehicleId;
+      Future.microtask(() {
+                ref.watch(selectedVehicleIdProvider.notifier).state = vehicleId;
+                });
+    
     showVehicleTopModalSheet(context, vehicleId, ref);
     showVehicleInfoModal(context, vehicleId, ref);
     }

@@ -12,6 +12,14 @@ class VehicleSearchNotifier extends StateNotifier<List<Data>> {
 
   VehicleSearchNotifier(this.ref) : super([]) {
     _init();
+
+    // Listen for changes in liveVehicleProvider and update the state
+    ref.listen<AsyncValue<List<Data>?>>(liveVehicleProvider, (previous, next) {
+      if (next.hasValue && next.value != null) {
+        _allVehicles = next.value!;
+        state = _allVehicles; // Update the state with new data
+      }
+    });
   }
 
   Future<void> _init() async {
@@ -40,3 +48,4 @@ final vehicleSearchProvider =
     StateNotifierProvider<VehicleSearchNotifier, List<Data>>((ref) {
   return VehicleSearchNotifier(ref);
 });
+

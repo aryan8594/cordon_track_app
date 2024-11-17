@@ -1,100 +1,248 @@
 import 'dart:developer';
-import 'dart:math';
+// import 'dart:math';
 
 import 'package:cordon_track_app/business_logic/map_controller_provider.dart';
 import 'package:cordon_track_app/business_logic/poly_line_provider.dart';
+import 'package:cordon_track_app/data/data_providers/vehicle_history_provider.dart';
+import 'package:cordon_track_app/data/models/vehicle_history_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:flutter_datetime_picker_plus/flutter_datetime_picker_plus.dart';
 import 'package:board_datetime_picker/board_datetime_picker.dart';
+import 'package:basic_utils/basic_utils.dart';
+
 
 
 class VehicleHistoryPage extends ConsumerStatefulWidget {
   final String vehicleId;
 
-  const VehicleHistoryPage({required this.vehicleId});
+  const VehicleHistoryPage({required this.vehicleId, Key? key}) : super(key: key);
 
   @override
   _VehicleHistoryPageState createState() => _VehicleHistoryPageState();
 }
 
 class _VehicleHistoryPageState extends ConsumerState<VehicleHistoryPage> {
-  late GoogleMapController _mapController;
+
   DateTime? fromDate;
   DateTime? toDate;
-  Set<Polyline> polylines = {};
-  Set<Marker> arrowMarkers = {};
+  String selectedRange = 'Today';
 
-  // Function to load polylines with custom dates
-  void loadPolylinesWithCustomDates() {
+
+  @override
+  void initState() {
+  super.initState();
+  // Automatically load today's data when the page opens
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    loadPolylinesWithCustomDates();
+  });
+}
+
+
+  // Load Polylines and Markers together
+  Future<void> loadPolylinesWithCustomDates() async {
+        if (mounted) {
+
+    }
+
     if (fromDate != null && toDate != null) {
       ref
           .read(polyLineProvider(widget.vehicleId).notifier)
-          .loadVehicleHistoryPolyline(widget.vehicleId, fromDate!, toDate!);
+          .loadVehicleHistoryPolylineMarkers(widget.vehicleId, fromDate!, toDate!);
     }
+
+    setState(() {});
   }
-  
-  List<LatLng> _getArrowPoints(List<LatLng> polylineCoordinates) {
-    List<LatLng> arrowPoints = [];
-    for (int i = 0; i < polylineCoordinates.length; i += 10) {
-      arrowPoints.add(polylineCoordinates[i]);
+
+
+  @override
+  void dispose() {
+    if (!mounted) {
+      ref.read(mapControllerProvider.notifier).disposeController();
     }
-    return arrowPoints;
-  }
-
-  // Method to create markers for arrow points
-  Set<Marker> _createArrowMarkers(List<LatLng> arrowPoints) {
-    return arrowPoints
-        .asMap()
-        .entries
-        .map(
-          (entry) => Marker(
-            markerId: MarkerId('arrow_${entry.key}'),
-            position: entry.value,
-            icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueBlue),
-            rotation: _calculateBearing(entry.value, arrowPoints),
-            flat: true,
-          ),
-        )
-        .toSet();
-  }
-
-  // Function to calculate bearing between two points
-  double _calculateBearing(LatLng start, List<LatLng> points) {
-    final index = points.indexOf(start);
-    if (index == points.length - 1) return 0.0; // No next point, return 0 rotation
-    final nextPoint = points[index + 1];
-    final lat1 = start.latitude * (3.141592653589793 / 180.0);
-    final lon1 = start.longitude * (3.141592653589793 / 180.0);
-    final lat2 = nextPoint.latitude * (3.141592653589793 / 180.0);
-    final lon2 = nextPoint.longitude * (3.141592653589793 / 180.0);
-
-    final dLon = lon2 - lon1;
-    final y = sin(dLon) * cos(lat2);
-    final x = cos(lat1) * sin(lat2) - sin(lat1) * cos(lat2) * cos(dLon);
-    return (atan2(y, x) * 180.0 / 3.141592653589793 + 360.0) % 360.0;
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    // Watch polyline data for the specific vehicle ID
-    final polylines = ref.watch(polyLineProvider(widget.vehicleId));
-    final List<LatLng> polylineCoordinates = List<LatLng>.from(polylines.isNotEmpty ? polylines.first.points : []);
-
-    // Calculate arrow points
-    final arrowPoints = _getArrowPoints(polylineCoordinates);
-
-    final arrowMarkers = _createArrowMarkers(arrowPoints);
+    final polylines = ref.watch(polylineStateProvider(widget.vehicleId));
+    final markers = ref.watch(markerStateProvider(widget.vehicleId));
 
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
-        title: Text("Vehicle History"),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.date_range),
-            onPressed: () async {
+        title: InkWell(
+          onTap: () => showDateRangeSelectionSheet(context),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Container(
+                
+                padding: const EdgeInsets.all(8.0),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(8.0),
+                ),
+                child: Text(
+                  selectedRange,
+                  style: const TextStyle(color: Colors.green, fontSize: 16),
+                  textAlign: TextAlign.start,
+                ),
+              ),
+              Icon(Icons.date_range),
+            ],
+          ),
+        ),
+      
+      ),
+      body: Column(
+        children: [
+          Expanded(
+            child: GoogleMap(
+              initialCameraPosition: const CameraPosition(
+                target: LatLng(12.976692, 77.576249),
+                zoom: 14.0,
+              ),
+              onMapCreated: (controller) {
+                ref.read(mapControllerProvider.notifier).initializeController(controller);
+                controller.setMapStyle(Utils.mapStyles);
+                // _mapController = controller;
+              },
+              markers: markers,
+              polylines: polylines,
+              myLocationEnabled: true,
+              compassEnabled: true,
+              rotateGesturesEnabled: false,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void showDateRangeSelectionSheet(BuildContext context) {
+    showModalBottomSheet(
+      showDragHandle:true,
+      isScrollControlled : true, 
+      context: context,
+      builder: (BuildContext context) {
+        return Wrap(
+          children: [
+            //TODAY
+            ListTile(
+              title: const Text('Today'),
+              onTap: () {
+                final today = DateTime.now();
+                fromDate = DateTime(today.year, today.month, today.day, 0, 0, 0);
+                toDate = DateTime(today.year, today.month, today.day, 23, 59, 59);
+                selectedRange = 'Today';
+                Navigator.pop(context);
+                loadPolylinesWithCustomDates();
+              },
+            ),
+            //YESTERDAY
+            ListTile(
+              title: const Text('Yesterday'),
+              onTap: () {
+                final yesterday = DateTime.now().subtract(const Duration(days: 1));
+                fromDate = DateTime(yesterday.year, yesterday.month, yesterday.day, 0, 0, 0);
+                toDate = DateTime(yesterday.year, yesterday.month, yesterday.day, 23, 59, 59);
+                selectedRange = 'Yesterday';
+                Navigator.pop(context);
+                loadPolylinesWithCustomDates();
+              },
+            ),
+            //THIS WEEK
+            ListTile(
+              title: const Text('This Week'),
+              onTap: () {
+                final today = DateTime.now();
+                fromDate = DateUtil.startOfWeek();
+                toDate = DateUtil.startOfWeek().add(const Duration(days: 7));
+                selectedRange = 'This Week';
+                Navigator.pop(context);
+                loadPolylinesWithCustomDates();
+              },
+            ),
+            //LAST WEEK
+            ListTile(
+              title: const Text('Last Week'),
+              onTap: () {
+                final today = DateTime.now();
+                fromDate = DateUtil.startOfWeek().subtract(const Duration(days: 7));
+                toDate = fromDate!.add(Duration(days: 7));
+                selectedRange = 'Last Week';
+                Navigator.pop(context);
+                loadPolylinesWithCustomDates();
+              },
+            ),
+            //LAST 7 DAYS
+            ListTile(
+              title: const Text('Last 7 Days'),
+              onTap: () {
+                final today = DateTime.now();
+                fromDate = DateTime(today.year, today.month, today.day, 0, 0, 0).subtract(const Duration(days: 7));
+                toDate = DateTime(today.year, today.month, today.day, 23, 59, 59);
+                selectedRange = 'Last 7 Days';
+                Navigator.pop(context);
+                loadPolylinesWithCustomDates();
+              },
+            ),
+            //LAST 15 DAYS
+            ListTile(
+              title: const Text('Last 15 Days'),
+              onTap: () {
+                final today = DateTime.now();
+                fromDate = DateTime(today.year, today.month, today.day, 0, 0, 0).subtract(const Duration(days: 15));
+                toDate = DateTime(today.year, today.month, today.day, 23, 59, 59);
+                selectedRange = 'Last 15 Days';
+                Navigator.pop(context);
+                loadPolylinesWithCustomDates();
+              },
+            ),
+            //THIS MONTH
+            ListTile(
+              title: const Text('This Month'),
+              onTap: () {
+                final today = DateTime.now();
+                fromDate = DateUtil.startOfMonth();
+                toDate = fromDate!.add(const Duration(days:30));
+                selectedRange = 'This Month';
+                Navigator.pop(context);
+                loadPolylinesWithCustomDates();
+              },
+            ),
+            //LAST MONTH
+            ListTile(
+              title: const Text('Last Month'),
+              onTap: () {
+                final today = DateTime.now();
+                fromDate = DateUtil.startOfMonth().subtract(const Duration(days: 30));
+                toDate = fromDate!.add(const Duration(days: 30));
+                selectedRange = 'Last Month';
+                Navigator.pop(context);
+                loadPolylinesWithCustomDates();
+              },
+            ),
+            //LAST 30 DAYS
+            ListTile(
+              title: const Text('Last 30 Days'),
+              onTap: () {
+                final today = DateTime.now();
+                fromDate = DateTime(today.year, today.month, today.day, 0, 0, 0).subtract(const Duration(days: 30));
+                toDate = DateTime(today.year, today.month, today.day, 23, 59, 59);
+                selectedRange = 'Last 30 Days';
+                Navigator.pop(context);
+                loadPolylinesWithCustomDates();
+              },
+            ),
+            //CUSTOM DATE PICKER
+            ListTile(
+              title: const Text('Custom Range'),
+              onTap: () async {
+                Navigator.pop(context);
+
               final pickedDates = await showBoardDateTimeMultiPicker(
             context: context,
             pickerType: DateTimePickerType.datetime,
@@ -108,7 +256,7 @@ class _VehicleHistoryPageState extends ConsumerState<VehicleHistoryPage> {
               // topMargin: 0,
             ),
             headerWidget: Container(
-              height: 60,
+              height: 80,
               margin: const EdgeInsets.all((8)),
               decoration: BoxDecoration(
                 color: Colors.white,
@@ -117,7 +265,8 @@ class _VehicleHistoryPageState extends ConsumerState<VehicleHistoryPage> {
               ),
               alignment: Alignment.center,
               child: Text(
-                'Select Date-Range',
+                'Select Date-Range\n(YYYY/MM/DD HH:MM)  ',
+                textAlign:TextAlign.center,
                 style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                       fontWeight: FontWeight.bold,
                       color: Colors.blueAccent,
@@ -128,31 +277,46 @@ class _VehicleHistoryPageState extends ConsumerState<VehicleHistoryPage> {
               
 
               if (pickedDates != null) {
-                fromDate = pickedDates.start as DateTime;
-                toDate = pickedDates.end as DateTime;
+                fromDate = pickedDates.start;
+                toDate = pickedDates.end;
+                Future.microtask(() {
                 loadPolylinesWithCustomDates();
-                print("dates selected $pickedDates");
+                });
+                log("dates selected $pickedDates");
               
               }
-            },
-          ),
-        ],
-      ),
-      body: GoogleMap(
-        initialCameraPosition: CameraPosition(
-          target: LatLng(12.976692, 77.576249),
-          zoom: 14.0,
-        ),
-        onMapCreated: (controller) {
-          _mapController = controller;
-          controller.setMapStyle(Utils.mapStyles);
-        },
-        polylines: polylines,
-        markers: arrowMarkers,
-        myLocationEnabled: true,
-        compassEnabled: true,
-      ),
+
+              },
+            ),
+          ],
+        );
+      },
     );
+  }
+
+}
+
+class DateUtil {
+  static DateTime startOfWeek() {
+    final today = DateTime.now();
+    final firstDayWeek = DateTime(today.year, today.month, today.day, 0, 0, 0);
+    return firstDayWeek.subtract(Duration(days: today.weekday - 1));
+  }
+
+  static DateTime endOfWeek() {
+    final today = DateTime.now();
+    final firstDayWeek = DateTime(today.year, today.month, today.day, 23, 59, 59);
+    return firstDayWeek.subtract(Duration(days: today.weekday + 5));
+  }
+
+  static DateTime startOfMonth() {
+    final today = DateTime.now();
+    return DateTime(today.year, today.month, 1, 0, 0, 0);
+  }
+
+  static DateTime endOfMonth() {
+    final today = DateTime.now();
+    return DateTime(today.year, today.month, 30, 23, 59, 59);
   }
 }
 

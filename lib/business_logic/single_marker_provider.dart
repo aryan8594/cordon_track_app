@@ -189,8 +189,8 @@ class SingleMarkerNotifier extends StateNotifier<Set<Marker>> {
       ) {
     // if (isDisposed) return;
     for (var vehicle in vehicle.data!) {
-  const int steps = 10;
-  const int animationDuration = 5000;
+  const int steps = 150;
+  const int animationDuration = 8000;
   
   double startLat = oldMarker.position.latitude;
   double startLng = oldMarker.position.longitude;

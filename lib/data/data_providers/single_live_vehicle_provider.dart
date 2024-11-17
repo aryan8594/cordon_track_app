@@ -6,7 +6,7 @@ import 'package:cordon_track_app/data/repositories/single_live_vehicle_api.dart'
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 // Provider to manage the selected vehicle ID
-final selectedVehicleIdProvider = StateProvider<String?>((ref) => null);
+final selectedVehicleIdProvider = StateProvider<String?>((ref) => '');
 
 
 // Fetch vehicle data from API using the repository every 5 seconds

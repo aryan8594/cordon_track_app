@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:developer';
 import 'dart:ffi';
-
+import 'package:intl/intl.dart';
 import 'package:backdrop/backdrop.dart';
 import 'package:cordon_track_app/business_logic/map_controller_provider.dart';
 import 'package:cordon_track_app/business_logic/poly_line_provider.dart';
@@ -17,10 +17,12 @@ import 'package:top_modal_sheet/top_modal_sheet.dart';
 class SingleVehicleMapPage extends ConsumerStatefulWidget {
   final String vehicleId;
 
-  const SingleVehicleMapPage({Key? key, required this.vehicleId}) : super(key: key);
+  const SingleVehicleMapPage({Key? key, required this.vehicleId})
+      : super(key: key);
 
   @override
-  ConsumerState<SingleVehicleMapPage> createState() => _SingleVehicleMapPageState();
+  ConsumerState<SingleVehicleMapPage> createState() =>
+      _SingleVehicleMapPageState();
 }
 
 class _SingleVehicleMapPageState extends ConsumerState<SingleVehicleMapPage> {
@@ -30,63 +32,66 @@ class _SingleVehicleMapPageState extends ConsumerState<SingleVehicleMapPage> {
   bool _isBackLayerVisible = false;
 //  DateTime now = DateTime.now();
 
-
-
   // DateTime fromDate = DateTime.now().subtract(Duration(days: 1));
   // DateTime toDate = DateTime.now();
 
   Set<Polyline> polylines = {};
-  
+
   DateTime now = DateTime.now();
   late DateTime fromDate;
   late DateTime toDate;
 
-@override
+  @override
   void initState() {
     super.initState();
-   
-  fromDate = DateTime(now.year, now.month, now.day, 0, 0, 1); // Start of the day
-  toDate = DateTime(now.year, now.month, now.day, 23, 59, 59); // End of the day
+
+    fromDate =
+        DateTime(now.year, now.month, now.day, 0, 0, 0); // Start of the day
+    toDate =
+        DateTime(now.year, now.month, now.day, 23, 59, 59); // End of the day
 
     Future.microtask(() {
-        loadPolylinesWithCustomDates();
-      });
-    ref.read(singleMarkerProvider(widget.vehicleId).notifier).updateMarkers(context);
+      loadPolylinesWithCustomDates();
+    });
+    ref
+        .read(singleMarkerProvider(widget.vehicleId).notifier)
+        .updateMarkers(context);
     _startUpdateTimer();
   }
 
-void _startUpdateTimer() {
-  _updateTimer = Timer.periodic(const Duration(seconds: 10), (timer) {
-    if (mounted) {
-      // Update from and to dates for the refresh
-      DateTime now = DateTime.now();
-      DateTime fromDate = DateTime(now.year, now.month, now.day, 0, 0, 1); // Start of the day
-      DateTime toDate = DateTime(now.year, now.month, now.day, 23, 59, 59); // End of the day
+  void _startUpdateTimer() {
+    _updateTimer = Timer.periodic(const Duration(seconds: 10), (timer) {
+      if (mounted) {
+        // Update from and to dates for the refresh
+        DateTime now = DateTime.now();
+        DateTime fromDate =
+            DateTime(now.year, now.month, now.day, 0, 0, 1); // Start of the day
+        DateTime toDate = DateTime(
+            now.year, now.month, now.day, 23, 59, 59); // End of the day
 
-      // Clear polylines and reload with new data
-      Future.microtask(() {
-        loadPolylinesWithCustomDates();
-      });
-      ref.read(singleMarkerProvider(widget.vehicleId).notifier).updateMarkers(context);
-    } else {
-      timer.cancel();
-    }
-  });
-}
-
-
-
-        void loadPolylinesWithCustomDates() {
-      if (fromDate != null && toDate != null) {
-        ref.read(polyLineProvider(widget.vehicleId).notifier)
-            .loadVehicleHistoryPolyline(widget.vehicleId, fromDate!, toDate!); 
-
-            
+        // Clear polylines and reload with new data
+        Future.microtask(() {
+          loadPolylinesWithCustomDates();
+        });
+        ref
+            .read(singleMarkerProvider(widget.vehicleId).notifier)
+            .updateMarkers(context);
+      } else {
+        timer.cancel();
       }
+    });
+  }
+
+  void loadPolylinesWithCustomDates() {
+    if (fromDate != null && toDate != null) {
+      ref
+          .read(polyLineProvider(widget.vehicleId).notifier)
+          .loadVehicleHistoryPolylineMarkers(
+              widget.vehicleId, fromDate!, toDate!);
     }
+  }
 
-
-   @override
+  @override
   void dispose() {
     _updateTimer?.cancel();
     if (!mounted) {
@@ -97,47 +102,42 @@ void _startUpdateTimer() {
 
   @override
   Widget build(BuildContext context) {
-
     final vehicles = ref.watch(singleLiveVehicleProvider(widget.vehicleId));
     final markers = ref.watch(singleMarkerProvider(widget.vehicleId));
-   polylines = ref.watch(polyLineProvider(widget.vehicleId));
-    return 
-    BackdropScaffold(
+    polylines = ref.watch(polylineStateProvider(widget.vehicleId));
+    return BackdropScaffold(
       key: _backdropKey,
-      // appBar: 
+      // appBar:
       // AppBar(title: const Text("Single Vehicle Tracking")),
       stickyFrontLayer: true,
-      concealBacklayerOnBackButton : false,
-      
+      concealBacklayerOnBackButton: false,
+
       // subHeaderAlwaysActive: false,
       // headerHeight:300,
       revealBackLayerAtStart: true,
-      subHeader: 
-      GestureDetector(
+      subHeader: GestureDetector(
           onVerticalDragUpdate: _handleDrag,
-              onVerticalDragEnd: _handleDragEnd,
-          child:_buildSubHeader()
-          ),
-      
+          onVerticalDragEnd: _handleDragEnd,
+          child: _buildSubHeader()),
 
-      frontLayer:GestureDetector(
-        onVerticalDragUpdate: _handleDrag,
-              onVerticalDragEnd: _handleDragEnd,
-        child: _buildFrontLayer()
-        ),
-      
+      frontLayer: GestureDetector(
+          onVerticalDragUpdate: _handleDrag,
+          onVerticalDragEnd: _handleDragEnd,
+          child: _buildFrontLayer()),
+
       backLayer: vehicles.when(
         data: (vehicleData) {
           if (vehicleData == null) {
             return const Center(child: Text('Vehicle data unavailable'));
           }
 
-
-
           for (var vehicle in vehicleData.data!) {
             return GoogleMap(
+              rotateGesturesEnabled: false,
               onMapCreated: (controller) {
-                ref.read(mapControllerProvider.notifier).initializeController(controller);
+                ref
+                    .read(mapControllerProvider.notifier)
+                    .initializeController(controller);
                 controller.setMapStyle(Utils.mapStyles);
               },
               markers: markers,
@@ -151,9 +151,10 @@ void _startUpdateTimer() {
               ),
             );
           }
-          return Divider(color: Colors.amber,);
+          return Divider(
+            color: Colors.amber,
+          );
         },
-
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, stack) => Center(child: Text('Error: $error $stack')),
       ),
@@ -179,305 +180,457 @@ void _startUpdateTimer() {
     });
   }
 
+  
+  String timePassedSince(String dateString) {
+  try {
+    // Define the custom date format
+    DateFormat format = DateFormat("dd-MM-yyyy HH:mm:ss");
+    // Parse the input string to DateTime
+    DateTime date = format.parse(dateString);
 
-Widget _buildSubHeader() {
+    // Get the current time
+    DateTime now = DateTime.now();
+
+    // Calculate the difference
+    Duration difference = now.difference(date);
+
+    // Extract hours and minutes from the difference
+    int hours = difference.inHours;
+    int minutes = difference.inMinutes % 60;
+
+    // Build the result string
+    String result = '';
+    if (hours > 0) result += '$hours Hour${hours > 1 ? 's' : ''} ';
+    if (minutes > 0) result += '$minutes Minute${minutes > 1 ? 's' : ''}';
+
+    return result.isEmpty ? 'Just Now' : result.trim();
+  } catch (e) {
+    return 'Invalid date format';
+  }
+}
 
   String convertSecondsToHoursMinutes(String secondsString) {
-  // Convert the string to an integer
-  int totalSeconds = int.parse(secondsString) ?? 0;
+    // Convert the string to an integer
+    int totalSeconds = int.parse(secondsString) ?? 0;
 
-  // Create a Duration object
-  Duration duration = Duration(seconds: totalSeconds);
+    // Create a Duration object
+    Duration duration = Duration(seconds: totalSeconds);
 
-  // Extract hours and minutes
-  int hours = duration.inHours;
-  int minutes = duration.inMinutes.remainder(60);
+    // Extract hours and minutes
+    int hours = duration.inHours;
+    int minutes = duration.inMinutes.remainder(60);
 
-  // Return formatted string
-  return '${hours}h ${minutes}m';
-}
-final vehicleData = ref.watch(singleLiveVehicleProvider(widget.vehicleId));
+    // Return formatted string
+    return '${hours}h ${minutes}m';
+  }
+
+  Widget _buildSubHeader() {
+    final vehicleData = ref.watch(singleLiveVehicleProvider(widget.vehicleId));
 
     return vehicleData.when(
       data: (vehicle) {
         if (vehicle == null || vehicle.data == null || vehicle.data!.isEmpty) {
-          return const Center(child: Text("No data available for this vehicle."));
+          return const Center(
+              child: Text("No data available for this vehicle."));
         }
 
-        var vehicleInfo = vehicle.data![0]; // Access the first item in the data list
-        double? speed = vehicleInfo.speed != null ? double.tryParse(vehicleInfo.speed!) : null;
-        double? idleSince = vehicleInfo.idleSince != null ? double.tryParse(vehicleInfo.idleSince!) : null;
-        double? stoppageSince = vehicleInfo.stoppageSince != null ? double.tryParse(vehicleInfo.stoppageSince!) : null;
-        double? externalBatteryVoltage = vehicleInfo.externalBatteryVoltage != null ? double.tryParse(vehicleInfo.externalBatteryVoltage!) : null;
-        
+        var vehicleInfo =
+            vehicle.data![0]; // Access the first item in the data list
+        double? speed = vehicleInfo.speed != null
+            ? double.tryParse(vehicleInfo.speed!)
+            : null;
+        double? idleSince = vehicleInfo.idleSince != null
+            ? double.tryParse(vehicleInfo.idleSince!)
+            : null;
+        double? stoppageSince = vehicleInfo.stoppageSince != null
+            ? double.tryParse(vehicleInfo.stoppageSince!)
+            : null;
+        double? externalBatteryVoltage =
+            vehicleInfo.externalBatteryVoltage != null
+                ? double.tryParse(vehicleInfo.externalBatteryVoltage!)
+                : null;
 
-    return Card(  
-      color: Colors.white,
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            _isBackLayerVisible == true
-            ?const Center(child: Text("Tap to reveal more info", style: TextStyle(fontSize: 10, color: Colors.grey),))
-            :const Center(child: Text("Swipe Down for Map", style: TextStyle(fontSize: 10, color: Colors.grey),)),
-            
-            const SizedBox(height: 10,),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        return Card(
+          color: Colors.white,
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
-                speed == 0
-                ? const Icon(Icons.adjust_rounded, color: Colors.yellow,)
-                : const Icon(Icons.adjust_rounded, color: Colors.green,),
-    
-                Column(
+                _isBackLayerVisible == true
+                    ? const Center(
+                        child: Text(
+                        "Tap to reveal more info",
+                        style: TextStyle(fontSize: 10, color: Colors.grey),
+                      ))
+                    : const Center(
+                        child: Text(
+                        "Swipe Down for Map",
+                        style: TextStyle(fontSize: 10, color: Colors.grey),
+                      )),
+                const SizedBox(
+                  height: 10,
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    vehicleInfo.speed == "0"
-                    ?const Text("IDLE", style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.yellow),)
-                    :const Text("MOVING", style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.green),),
-    
-                     stoppageSince! <= 0 && idleSince! <= 0 
-                    ?Text("Distance today is ${vehicleInfo.distanceToday} Km", style: const TextStyle(fontSize: 10,color: Colors.grey),)
-                    :Text("Vehicle Idle Since: ${convertSecondsToHoursMinutes(vehicleInfo.idleSince!)}\nVehicle Stoppage since: ${convertSecondsToHoursMinutes(vehicleInfo.stoppageSince!)}", 
-                    style: const TextStyle(fontSize: 10,color: Colors.grey),
+                    speed == 0
+                        ? const Icon(
+                            Icons.adjust_rounded,
+                            color: Colors.yellow,
+                          )
+                        : const Icon(
+                            Icons.adjust_rounded,
+                            color: Colors.green,
+                          ),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        vehicleInfo.speed == "0"
+                            ? const Text(
+                                "IDLE",
+                                style: TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.yellow),
+                              )
+                            : const Text(
+                                "MOVING",
+                                style: TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.green),
+                              ),
+                        stoppageSince! <= 60 && idleSince! <= 60
+                            ? Text(
+                                "Distance today is ${vehicleInfo.distanceToday} Km",
+                                style: const TextStyle(
+                                    fontSize: 10, color: Colors.grey),
+                              )
+                            : Text(
+                                "Vehicle Idle Since: ${convertSecondsToHoursMinutes(vehicleInfo.idleSince!)}\nVehicle Stoppage since: ${convertSecondsToHoursMinutes(vehicleInfo.stoppageSince!)}",
+                                style: const TextStyle(
+                                    fontSize: 10, color: Colors.grey),
+                              ),
+                        Text(
+                          overflow: TextOverflow.clip,
+                          maxLines: 2,
+                          "Data Received : ${timePassedSince(vehicleInfo.datetime!)} ago",
+                          style: const TextStyle(fontSize: 10, color: Colors.grey),
+                        )
+                      ],
                     ),
-    
-    
-                    const Text("Data Received : 10 seconds ago", style: TextStyle(fontSize: 10, color: Colors.grey),)
+                    const SizedBox(
+                      width: 50,
+                    ),
+                    Column(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Row(
+                          children: [
+                            Text("${vehicleInfo.speed} Km/h"),
+                            speed! == 0
+                                ? const Icon(
+                                    Icons.speed_rounded,
+                                    color: Colors.yellow,
+                                  )
+                                : speed >= 60
+                                    ? const Icon(
+                                        Icons.speed_rounded,
+                                        color: Colors.red,
+                                      )
+                                    : speed <= 60
+                                        ? const Icon(
+                                            Icons.speed_rounded,
+                                            color: Colors.green,
+                                          )
+                                        : const Icon(
+                                            Icons.speed_rounded,
+                                            color: Colors.black,
+                                          ),
+                          ],
+                        ),
+                        Row(
+                          children: [
+                            vehicleInfo.ignitionStatus == "0"
+                                ? const Text("OFF")
+                                : const Text("ON"),
+                            vehicleInfo.ignitionStatus == "0"
+                                ? const Icon(
+                                    Icons.key_off,
+                                    color: Colors.red,
+                                  )
+                                : const Icon(
+                                    Icons.key,
+                                    color: Colors.green,
+                                  ),
+                          ],
+                        ),
+                        vehicleInfo.externalBatteryVoltage == null
+                            ? const SizedBox()
+                            : Row(
+                                children: [
+                                  Text(
+                                    "${vehicleInfo.externalBatteryVoltage} v",
+                                    style: TextStyle(fontSize: 15),
+                                  ),
+                                  externalBatteryVoltage! < 9
+                                      ? const Icon(
+                                          Icons.battery_charging_full_rounded,
+                                          size: 18,
+                                          color: Colors.redAccent,
+                                        )
+                                      : const Icon(
+                                          Icons.battery_charging_full_rounded,
+                                          size: 18,
+                                          color: Colors.green,
+                                        ),
+                                ],
+                              ),
+                        vehicleInfo.acStatus == null
+                            ? SizedBox()
+                            : Row(
+                                children: [
+                                  vehicleInfo.acStatus == "0"
+                                      ? const Text("AC OFF")
+                                      : vehicleInfo.acStatus == null
+                                          ? const Text("")
+                                          : vehicleInfo.acStatus == "1"
+                                              ? const Text("AC ON")
+                                              : const Text(""),
+                                  vehicleInfo.acStatus == "0"
+                                      ? const Icon(
+                                          Icons.ac_unit,
+                                          color: Colors.red,
+                                        )
+                                      : vehicleInfo.acStatus == "1"
+                                          ? const Icon(
+                                              Icons.ac_unit,
+                                              color: Colors.green,
+                                            )
+                                          : vehicleInfo.acStatus == null
+                                              ? SizedBox()
+                                              : SizedBox()
+                                ],
+                              ),
+                      ],
+                    )
                   ],
                 ),
-                const SizedBox(width: 50,),
-                Column(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  crossAxisAlignment: CrossAxisAlignment.end,
+                const SizedBox(
+                  height: 11,
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Row(
-    
-                      children: [
-                        Text("${vehicleInfo.speed} Km/h"),
-                        speed! == 0
-                        ?const Icon(Icons.speed_rounded, color: Colors.yellow,)
-                        :speed >= 60
-                        ?const Icon(Icons.speed_rounded, color: Colors.red,)
-                        :speed <= 60
-                        ?const Icon(Icons.speed_rounded, color: Colors.green,)
-                        :const Icon(Icons.speed_rounded, color: Colors.black,),
-                      ],
-                    ),
-                    Row(
-    
-                      children: [
-                        vehicleInfo.ignitionStatus == "0"
-                        ?const Text("OFF")
-                        :const Text("ON"),
-                        vehicleInfo.ignitionStatus == "0"
-                        ?const Icon(Icons.key_off, color: Colors.red,)
-                        :const Icon(Icons.key, color: Colors.green,),
-                      ],
-                    ),
-                    vehicleInfo.externalBatteryVoltage == null
-                      ?const SizedBox()
-                      :Row(
-                      children: [
-                        Text("${vehicleInfo.externalBatteryVoltage} v", style: TextStyle(fontSize: 15),),
-                        externalBatteryVoltage! < 8
-                        ? const Icon(Icons.battery_charging_full_rounded, size: 18,color: Colors.redAccent,)
-                        : const Icon(Icons.battery_charging_full_rounded, size: 18,color: Colors.green,),
-
-                      ],
-                    ),
-                    vehicleInfo.acStatus == null
-                    ?SizedBox()
-                    :Row(
-                      children: [
-                        vehicleInfo.acStatus == "0"
-                        ?const Text("AC OFF")
-                        :vehicleInfo.acStatus == null
-                        ?const Text("")
-                        :vehicleInfo.acStatus == "1"
-                        ?const Text("AC ON")
-                        :const Text(""),
-                        vehicleInfo.acStatus == "0"
-                        ?const Icon(Icons.ac_unit, color: Colors.red, )
-                        :vehicleInfo.acStatus == "1"
-                        ?const Icon(Icons.ac_unit, color: Colors.green, )
-                        :vehicleInfo.acStatus == null
-                        ?SizedBox()
-                        :SizedBox()
-                      ],
-                    ),
-                    
-    
+                    Flexible(
+                        child: Text(
+                      "${vehicleInfo.rto}",
+                      overflow: TextOverflow.clip,
+                      softWrap: true,
+                      maxLines: 5,
+                      style: const TextStyle(
+                          fontWeight: FontWeight.bold, fontSize: 15),
+                    )),
+                    // const IconButton(
+                    //   icon: Icon(Icons.settings_backup_restore_rounded),
+                    //   onPressed: null,
+                    // ),
                   ],
-                )
+                ),
               ],
             ),
-           const SizedBox(height: 11,),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Flexible(child: Text(
-                  "${vehicleInfo.rto}", 
-                  overflow: TextOverflow.clip,
-                          softWrap: true,
-                          maxLines: 5,
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),)),
-                const Icon(Icons.settings_backup_restore_rounded),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
+          ),
+        );
       },
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (err, stack) => Text("Error: $err"),
     );
   }
 
-
   Widget _buildFrontLayer() {
-    String convertSecondsToHoursMinutes(String secondsString) {
-  // Convert the string to an integer
-  int totalSeconds = int.tryParse(secondsString) ?? 0;
 
-  // Create a Duration object
-  Duration duration = Duration(seconds: totalSeconds);
-
-  // Extract hours and minutes
-  int hours = duration.inHours;
-  int minutes = duration.inMinutes.remainder(60);
-
-  // Return formatted string
-  return '${hours}h ${minutes}m';
-}
-    
     final vehicleData = ref.watch(singleLiveVehicleProvider(widget.vehicleId));
     return vehicleData.when(
       data: (vehicle) {
         if (vehicle == null || vehicle.data == null || vehicle.data!.isEmpty) {
-          return const Center(child: Text("No data available for this vehicle."));
+          return const Center(
+              child: Text("No data available for this vehicle."));
         }
 
-        var vehicleInfo = vehicle.data![0]; // Access the first item in the data list
-        double? speed = vehicleInfo.speed != null ? double.tryParse(vehicleInfo.speed!) : null;
-    return Card(  
-      color: Colors.white,
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            
-            const SizedBox(height: 30,),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        var vehicleInfo =
+            vehicle.data![0]; // Access the first item in the data list
+        double? speed = vehicleInfo.speed != null
+            ? double.tryParse(vehicleInfo.speed!)
+            : null;
+        return Card(
+          color: Colors.white,
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
-                vehicleInfo.speed == "0"
-                ? const Icon(Icons.adjust_rounded, color: Colors.yellow,)
-                : const Icon(Icons.adjust_rounded, color: Colors.green,),
-    
-                Column(
+                const SizedBox(
+                  height: 30,
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     vehicleInfo.speed == "0"
-                    ?const Text("IDLE", style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.yellow),)
-                    :const Text("MOVING", style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.green),),
-    
-                    vehicleInfo.idleSince == "0" || vehicleInfo.stoppageSince == "0"
-                    ?Text("Distance today is ${vehicleInfo.distanceToday} Km", style: const TextStyle(fontSize: 10,color: Colors.grey),)
-                    :Text("Vehicle Idle Since: ${vehicleInfo.idleSince}\nVehicle Stoppage since: ${vehicleInfo.stoppageSince}", style: const TextStyle(fontSize: 10,color: Colors.grey),),
-    
-    
-                    const Text("Data Received : 10 seconds ago", style: TextStyle(fontSize: 10, color: Colors.grey),)
-                  ],
-                ),
-                SizedBox(width: 50,),
-                Column(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Row(
-    
+                        ? const Icon(
+                            Icons.adjust_rounded,
+                            color: Colors.yellow,
+                          )
+                        : const Icon(
+                            Icons.adjust_rounded,
+                            color: Colors.green,
+                          ),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text("${vehicleInfo.speed} Kmph"),
-                        speed! == 0
-                        ?const Icon(Icons.speed_rounded, color: Colors.yellow,)
-                        :speed >= 60
-                        ?const Icon(Icons.speed_rounded, color: Colors.red,)
-                        :speed <= 60
-                        ?const Icon(Icons.speed_rounded, color: Colors.green,)
-                        :const Icon(Icons.speed_rounded, color: Colors.black,),
+                        vehicleInfo.speed == "0"
+                            ? const Text(
+                                "IDLE",
+                                style: TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.yellow),
+                              )
+                            : const Text(
+                                "MOVING",
+                                style: TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.green),
+                              ),
+                        vehicleInfo.idleSince == "0" ||
+                                vehicleInfo.stoppageSince == "0"
+                            ? Text(
+                                "Distance today is ${vehicleInfo.distanceToday} Km",
+                                style: const TextStyle(
+                                    fontSize: 10, color: Colors.grey),
+                              )
+                            : Text(
+                                "Vehicle Idle Since: ${vehicleInfo.idleSince}\nVehicle Stoppage since: ${vehicleInfo.stoppageSince}",
+                                style: const TextStyle(
+                                    fontSize: 10, color: Colors.grey),
+                              ),
+                        const Text(
+                          "Data Received : 10 seconds ago",
+                          style: TextStyle(fontSize: 10, color: Colors.grey),
+                        )
                       ],
                     ),
-                    Row(
-    
-                      children: [
-                        vehicleInfo.ignitionStatus == "0"
-                        ?const Text("OFF")
-                        :const Text("ON"),
-                        vehicleInfo.ignitionStatus == "0"
-                        ?const Icon(Icons.key_off, color: Colors.red,)
-                        :const Icon(Icons.key, color: Colors.green,),
-                      ],
+                    SizedBox(
+                      width: 50,
                     ),
-                    Row(
+                    Column(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
-                        vehicleInfo.acStatus == "0"
-                        ?const Text("AC OFF")
-                        :vehicleInfo.acStatus == null
-                        ?const Text("")
-                        :vehicleInfo.acStatus == "1"
-                        ?const Text("AC ON")
-                        :const Text(""),
-                        vehicleInfo.acStatus == "0"
-                        ?const Icon(Icons.ac_unit, color: Colors.red, )
-                        :vehicleInfo.acStatus == "1"
-                        ?const Icon(Icons.ac_unit, color: Colors.green, )
-                        :vehicleInfo.acStatus == null
-                        ?const Text("")
-                        :const Text(""),
+                        Row(
+                          children: [
+                            Text("${vehicleInfo.speed} Kmph"),
+                            speed! == 0
+                                ? const Icon(
+                                    Icons.speed_rounded,
+                                    color: Colors.yellow,
+                                  )
+                                : speed >= 60
+                                    ? const Icon(
+                                        Icons.speed_rounded,
+                                        color: Colors.red,
+                                      )
+                                    : speed <= 60
+                                        ? const Icon(
+                                            Icons.speed_rounded,
+                                            color: Colors.green,
+                                          )
+                                        : const Icon(
+                                            Icons.speed_rounded,
+                                            color: Colors.black,
+                                          ),
+                          ],
+                        ),
+                        Row(
+                          children: [
+                            vehicleInfo.ignitionStatus == "0"
+                                ? const Text("OFF")
+                                : const Text("ON"),
+                            vehicleInfo.ignitionStatus == "0"
+                                ? const Icon(
+                                    Icons.key_off,
+                                    color: Colors.red,
+                                  )
+                                : const Icon(
+                                    Icons.key,
+                                    color: Colors.green,
+                                  ),
+                          ],
+                        ),
+                        Row(
+                          children: [
+                            vehicleInfo.acStatus == "0"
+                                ? const Text("AC OFF")
+                                : vehicleInfo.acStatus == null
+                                    ? const Text("")
+                                    : vehicleInfo.acStatus == "1"
+                                        ? const Text("AC ON")
+                                        : const Text(""),
+                            vehicleInfo.acStatus == "0"
+                                ? const Icon(
+                                    Icons.ac_unit,
+                                    color: Colors.red,
+                                  )
+                                : vehicleInfo.acStatus == "1"
+                                    ? const Icon(
+                                        Icons.ac_unit,
+                                        color: Colors.green,
+                                      )
+                                    : vehicleInfo.acStatus == null
+                                        ? const Text("")
+                                        : const Text(""),
+                          ],
+                        )
                       ],
                     )
-    
                   ],
-                )
+                ),
+                const SizedBox(
+                  height: 11,
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Flexible(
+                        child: Text(
+                      "${vehicleInfo.rto}",
+                      overflow: TextOverflow.clip,
+                      softWrap: true,
+                      maxLines: 5,
+                      style: const TextStyle(
+                          fontWeight: FontWeight.bold, fontSize: 15),
+                    )),
+                    const Icon(Icons.settings_backup_restore_rounded),
+                  ],
+                ),
               ],
             ),
-           const SizedBox(height: 11,),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Flexible(child: Text(
-                  "${vehicleInfo.rto}", 
-                  overflow: TextOverflow.clip,
-                          softWrap: true,
-                          maxLines: 5,
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),)),
-                const Icon(Icons.settings_backup_restore_rounded),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
+          ),
+        );
       },
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (err, stack) => Text("Error: $err"),
     );
-  
   }
-
 }
-
-
 
 class Utils {
   static String mapStyles = '''[

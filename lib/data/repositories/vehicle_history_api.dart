@@ -30,8 +30,8 @@ Future<VehicleHistoryModel?> fetchVehicleHistory( String slectedVehicleID, DateT
     }
 
   }catch (e) {
-      print("Exception caught: $e");
+      print("Exception caught at history API: $e");
       return null;
   }
-}
+  }
 }

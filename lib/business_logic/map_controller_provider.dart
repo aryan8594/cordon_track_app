@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
@@ -6,6 +8,7 @@ class MapControllerNotifier extends StateNotifier<GoogleMapController?> {
 
   Future<void> initializeController(GoogleMapController controller) async {
     state = controller;
+    log("map controller intialized");
   }
 
   Future<void> animateCamera(LatLng position, double zoom) async {
@@ -16,6 +19,7 @@ class MapControllerNotifier extends StateNotifier<GoogleMapController?> {
 
   void disposeController() {
     state = null; // Reset the controller on disposal
+    log("map controller disposed");
   }
 }
 

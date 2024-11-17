@@ -47,6 +47,7 @@ dependencies:
   backdrop: ^0.9.1
   board_datetime_picker: ^2.1.5
   we_slide: ^2.4.0
+  basic_utils: ^5.7.0
 
 dev_dependencies:
   flutter_test:
@@ -84,6 +85,7 @@ flutter:
     - lib/presentation/assets/cordon_logo_2.png
     - lib/presentation/assets/cordon_logo_3.png
     - lib/presentation/assets/arrow_black.png
+    - lib/presentation/assets/stop_marker.png
 
   #   - images/a_dot_ham.jpeg
 
