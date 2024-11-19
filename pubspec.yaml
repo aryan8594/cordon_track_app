@@ -86,6 +86,8 @@ flutter:
     - lib/presentation/assets/cordon_logo_3.png
     - lib/presentation/assets/arrow_black.png
     - lib/presentation/assets/stop_marker.png
+    - lib/presentation/assets/cab_blue.png
+    - lib/presentation/assets/truck_blue.png
 
   #   - images/a_dot_ham.jpeg
 

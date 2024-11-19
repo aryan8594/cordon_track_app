@@ -2,6 +2,7 @@ import 'dart:developer';
 // import 'dart:math';
 
 import 'package:cordon_track_app/business_logic/map_controller_provider.dart';
+import 'package:cordon_track_app/business_logic/playback_timer_provider.dart';
 import 'package:cordon_track_app/business_logic/poly_line_provider.dart';
 import 'package:cordon_track_app/data/data_providers/vehicle_history_provider.dart';
 import 'package:cordon_track_app/data/models/vehicle_history_model.dart';
@@ -12,49 +13,43 @@ import 'package:flutter_datetime_picker_plus/flutter_datetime_picker_plus.dart';
 import 'package:board_datetime_picker/board_datetime_picker.dart';
 import 'package:basic_utils/basic_utils.dart';
 
-
-
 class VehicleHistoryPage extends ConsumerStatefulWidget {
   final String vehicleId;
 
-  const VehicleHistoryPage({required this.vehicleId, Key? key}) : super(key: key);
+  const VehicleHistoryPage({required this.vehicleId, Key? key})
+      : super(key: key);
 
   @override
   _VehicleHistoryPageState createState() => _VehicleHistoryPageState();
 }
 
 class _VehicleHistoryPageState extends ConsumerState<VehicleHistoryPage> {
-
   DateTime? fromDate;
   DateTime? toDate;
   String selectedRange = 'Today';
 
-
   @override
   void initState() {
-  super.initState();
-  // Automatically load today's data when the page opens
-  WidgetsBinding.instance.addPostFrameCallback((_) {
-    loadPolylinesWithCustomDates();
-  });
-}
-
+    super.initState();
+    // Automatically load today's data when the page opens
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      loadPolylinesWithCustomDates();
+    });
+  }
 
   // Load Polylines and Markers together
   Future<void> loadPolylinesWithCustomDates() async {
-        if (mounted) {
-
-    }
+    if (mounted) {}
 
     if (fromDate != null && toDate != null) {
       ref
           .read(polyLineProvider(widget.vehicleId).notifier)
-          .loadVehicleHistoryPolylineMarkers(widget.vehicleId, fromDate!, toDate!);
+          .loadVehicleHistoryPolylineMarkers(
+              widget.vehicleId, fromDate!, toDate!);
     }
 
     setState(() {});
   }
-
 
   @override
   void dispose() {
@@ -66,8 +61,22 @@ class _VehicleHistoryPageState extends ConsumerState<VehicleHistoryPage> {
 
   @override
   Widget build(BuildContext context) {
-    final polylines = ref.watch(polylineStateProvider(widget.vehicleId));
-    final markers = ref.watch(markerStateProvider(widget.vehicleId));
+    // Watch the entire PolylineStateModel to rebuild on any state change
+    final polylineState = ref.watch(polyLineProvider(widget.vehicleId));
+    final polylineNotifier =
+        ref.read(polyLineProvider(widget.vehicleId).notifier);
+    final playbackTimer = ref.read(playbackTimerProvider.notifier);
+
+    // Combine existing markers with the playback marker (if available)
+    final Set<Marker> allMarkers = {
+      ...polylineState.markers,
+      if (polylineState.playbackMarker != null) polylineState.playbackMarker!,
+    };
+
+    // Log the current index and marker to ensure they are updating
+    log("Rendering map with currentIndex: ${polylineState.currentIndex}");
+    log("Total polyline coordinates: ${polylineState.polylineCoordinates.length}");
+    log("Playback marker: ${polylineState.playbackMarker?.position}");
 
     return Scaffold(
       appBar: AppBar(
@@ -78,7 +87,6 @@ class _VehicleHistoryPageState extends ConsumerState<VehicleHistoryPage> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Container(
-                
                 padding: const EdgeInsets.all(8.0),
                 decoration: BoxDecoration(
                   color: Colors.white,
@@ -90,11 +98,10 @@ class _VehicleHistoryPageState extends ConsumerState<VehicleHistoryPage> {
                   textAlign: TextAlign.start,
                 ),
               ),
-              Icon(Icons.date_range),
+              const Icon(Icons.date_range),
             ],
           ),
         ),
-      
       ),
       body: Column(
         children: [
@@ -105,15 +112,61 @@ class _VehicleHistoryPageState extends ConsumerState<VehicleHistoryPage> {
                 zoom: 14.0,
               ),
               onMapCreated: (controller) {
-                ref.read(mapControllerProvider.notifier).initializeController(controller);
+                ref
+                    .read(mapControllerProvider.notifier)
+                    .initializeController(controller);
                 controller.setMapStyle(Utils.mapStyles);
-                // _mapController = controller;
               },
-              markers: markers,
-              polylines: polylines,
+              markers: allMarkers,
+              polylines: polylineState.polylines,
               myLocationEnabled: true,
               compassEnabled: true,
               rotateGesturesEnabled: false,
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                // Play/Pause Button
+                IconButton(
+                  icon: Icon(
+                    polylineState.isPlaying ? Icons.pause : Icons.play_arrow,
+                  ),
+                  onPressed: () {
+                    polylineNotifier.togglePlayPause();
+
+                    if (polylineNotifier.isPlaying) {
+                      log("Starting playback...");
+                      ref
+                          .read(playbackTimerProvider.notifier)
+                          .startPlayback(widget.vehicleId);
+                    } else {
+                      log("Stopping playback...");
+                      ref.read(playbackTimerProvider.notifier).stopPlayback();
+                    }
+                  },
+                ),
+                // Playback Slider
+                Expanded(
+                  child: Slider(
+                    value: polylineState.currentIndex.toDouble(),
+                    min: 0,
+                    max: polylineState.polylineCoordinates.isNotEmpty
+                        ? (polylineState.polylineCoordinates.length - 1)
+                            .toDouble()
+                        : 0,
+                    onChanged: (value) {
+                      if (value.toInt() >= 0 &&
+                          value.toInt() <
+                              polylineState.polylineCoordinates.length) {
+                        polylineNotifier.setCurrentIndex(value.toInt());
+                      }
+                    },
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -123,19 +176,24 @@ class _VehicleHistoryPageState extends ConsumerState<VehicleHistoryPage> {
 
   void showDateRangeSelectionSheet(BuildContext context) {
     showModalBottomSheet(
-      showDragHandle:true,
-      isScrollControlled : true, 
+      showDragHandle: true,
+      isScrollControlled: true,
       context: context,
       builder: (BuildContext context) {
         return Wrap(
           children: [
             //TODAY
             ListTile(
-              title: const Text('Today'),
+              title: const Text(
+                'Today',
+                style: TextStyle(fontWeight: FontWeight.w500),
+              ),
               onTap: () {
                 final today = DateTime.now();
-                fromDate = DateTime(today.year, today.month, today.day, 0, 0, 0);
-                toDate = DateTime(today.year, today.month, today.day, 23, 59, 59);
+                fromDate =
+                    DateTime(today.year, today.month, today.day, 0, 0, 0);
+                toDate =
+                    DateTime(today.year, today.month, today.day, 23, 59, 59);
                 selectedRange = 'Today';
                 Navigator.pop(context);
                 loadPolylinesWithCustomDates();
@@ -143,11 +201,17 @@ class _VehicleHistoryPageState extends ConsumerState<VehicleHistoryPage> {
             ),
             //YESTERDAY
             ListTile(
-              title: const Text('Yesterday'),
+              title: const Text(
+                'Yesterday',
+                style: TextStyle(fontWeight: FontWeight.w500),
+              ),
               onTap: () {
-                final yesterday = DateTime.now().subtract(const Duration(days: 1));
-                fromDate = DateTime(yesterday.year, yesterday.month, yesterday.day, 0, 0, 0);
-                toDate = DateTime(yesterday.year, yesterday.month, yesterday.day, 23, 59, 59);
+                final yesterday =
+                    DateTime.now().subtract(const Duration(days: 1));
+                fromDate = DateTime(
+                    yesterday.year, yesterday.month, yesterday.day, 0, 0, 0);
+                toDate = DateTime(
+                    yesterday.year, yesterday.month, yesterday.day, 23, 59, 59);
                 selectedRange = 'Yesterday';
                 Navigator.pop(context);
                 loadPolylinesWithCustomDates();
@@ -155,7 +219,10 @@ class _VehicleHistoryPageState extends ConsumerState<VehicleHistoryPage> {
             ),
             //THIS WEEK
             ListTile(
-              title: const Text('This Week'),
+              title: const Text(
+                'This Week',
+                style: TextStyle(fontWeight: FontWeight.w500),
+              ),
               onTap: () {
                 final today = DateTime.now();
                 fromDate = DateUtil.startOfWeek();
@@ -167,10 +234,14 @@ class _VehicleHistoryPageState extends ConsumerState<VehicleHistoryPage> {
             ),
             //LAST WEEK
             ListTile(
-              title: const Text('Last Week'),
+              title: const Text(
+                'Last Week',
+                style: TextStyle(fontWeight: FontWeight.w500),
+              ),
               onTap: () {
                 final today = DateTime.now();
-                fromDate = DateUtil.startOfWeek().subtract(const Duration(days: 7));
+                fromDate =
+                    DateUtil.startOfWeek().subtract(const Duration(days: 7));
                 toDate = fromDate!.add(Duration(days: 7));
                 selectedRange = 'Last Week';
                 Navigator.pop(context);
@@ -179,11 +250,16 @@ class _VehicleHistoryPageState extends ConsumerState<VehicleHistoryPage> {
             ),
             //LAST 7 DAYS
             ListTile(
-              title: const Text('Last 7 Days'),
+              title: const Text(
+                'Last 7 Days',
+                style: TextStyle(fontWeight: FontWeight.w500),
+              ),
               onTap: () {
                 final today = DateTime.now();
-                fromDate = DateTime(today.year, today.month, today.day, 0, 0, 0).subtract(const Duration(days: 7));
-                toDate = DateTime(today.year, today.month, today.day, 23, 59, 59);
+                fromDate = DateTime(today.year, today.month, today.day, 0, 0, 0)
+                    .subtract(const Duration(days: 7));
+                toDate =
+                    DateTime(today.year, today.month, today.day, 23, 59, 59);
                 selectedRange = 'Last 7 Days';
                 Navigator.pop(context);
                 loadPolylinesWithCustomDates();
@@ -191,11 +267,16 @@ class _VehicleHistoryPageState extends ConsumerState<VehicleHistoryPage> {
             ),
             //LAST 15 DAYS
             ListTile(
-              title: const Text('Last 15 Days'),
+              title: const Text(
+                'Last 15 Days',
+                style: TextStyle(fontWeight: FontWeight.w500),
+              ),
               onTap: () {
                 final today = DateTime.now();
-                fromDate = DateTime(today.year, today.month, today.day, 0, 0, 0).subtract(const Duration(days: 15));
-                toDate = DateTime(today.year, today.month, today.day, 23, 59, 59);
+                fromDate = DateTime(today.year, today.month, today.day, 0, 0, 0)
+                    .subtract(const Duration(days: 15));
+                toDate =
+                    DateTime(today.year, today.month, today.day, 23, 59, 59);
                 selectedRange = 'Last 15 Days';
                 Navigator.pop(context);
                 loadPolylinesWithCustomDates();
@@ -203,11 +284,14 @@ class _VehicleHistoryPageState extends ConsumerState<VehicleHistoryPage> {
             ),
             //THIS MONTH
             ListTile(
-              title: const Text('This Month'),
+              title: const Text(
+                'This Month',
+                style: TextStyle(fontWeight: FontWeight.w500),
+              ),
               onTap: () {
                 final today = DateTime.now();
                 fromDate = DateUtil.startOfMonth();
-                toDate = fromDate!.add(const Duration(days:30));
+                toDate = fromDate!.add(const Duration(days: 30));
                 selectedRange = 'This Month';
                 Navigator.pop(context);
                 loadPolylinesWithCustomDates();
@@ -215,10 +299,14 @@ class _VehicleHistoryPageState extends ConsumerState<VehicleHistoryPage> {
             ),
             //LAST MONTH
             ListTile(
-              title: const Text('Last Month'),
+              title: const Text(
+                'Last Month',
+                style: TextStyle(fontWeight: FontWeight.w500),
+              ),
               onTap: () {
                 final today = DateTime.now();
-                fromDate = DateUtil.startOfMonth().subtract(const Duration(days: 30));
+                fromDate =
+                    DateUtil.startOfMonth().subtract(const Duration(days: 30));
                 toDate = fromDate!.add(const Duration(days: 30));
                 selectedRange = 'Last Month';
                 Navigator.pop(context);
@@ -227,11 +315,16 @@ class _VehicleHistoryPageState extends ConsumerState<VehicleHistoryPage> {
             ),
             //LAST 30 DAYS
             ListTile(
-              title: const Text('Last 30 Days'),
+              title: const Text(
+                'Last 30 Days',
+                style: TextStyle(fontWeight: FontWeight.w500),
+              ),
               onTap: () {
                 final today = DateTime.now();
-                fromDate = DateTime(today.year, today.month, today.day, 0, 0, 0).subtract(const Duration(days: 30));
-                toDate = DateTime(today.year, today.month, today.day, 23, 59, 59);
+                fromDate = DateTime(today.year, today.month, today.day, 0, 0, 0)
+                    .subtract(const Duration(days: 30));
+                toDate =
+                    DateTime(today.year, today.month, today.day, 23, 59, 59);
                 selectedRange = 'Last 30 Days';
                 Navigator.pop(context);
                 loadPolylinesWithCustomDates();
@@ -239,53 +332,53 @@ class _VehicleHistoryPageState extends ConsumerState<VehicleHistoryPage> {
             ),
             //CUSTOM DATE PICKER
             ListTile(
-              title: const Text('Custom Range'),
+              title: const Text(
+                'Custom Range',
+                style: TextStyle(fontWeight: FontWeight.w500),
+              ),
               onTap: () async {
                 Navigator.pop(context);
 
-              final pickedDates = await showBoardDateTimeMultiPicker(
-            context: context,
-            pickerType: DateTimePickerType.datetime,
-            // minimumDate: DateTime.now().add(const Duration(days: 1)),
-            startDate: fromDate,
-            endDate: toDate,
-            options: const BoardDateTimeOptions(
-              languages: BoardPickerLanguages.en(),
-              startDayOfWeek: DateTime.sunday,
-              pickerFormat: PickerFormat.ymd,
-              // topMargin: 0,
-            ),
-            headerWidget: Container(
-              height: 80,
-              margin: const EdgeInsets.all((8)),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                // border: Border.all(color: Colors.blueAccent, width: 4),
-                borderRadius: BorderRadius.circular(24),
-              ),
-              alignment: Alignment.center,
-              child: Text(
-                'Select Date-Range\n(YYYY/MM/DD HH:MM)  ',
-                textAlign:TextAlign.center,
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.blueAccent,
+                final pickedDates = await showBoardDateTimeMultiPicker(
+                  context: context,
+                  pickerType: DateTimePickerType.datetime,
+                  // minimumDate: DateTime.now().add(const Duration(days: 1)),
+                  startDate: fromDate,
+                  endDate: toDate,
+                  options: const BoardDateTimeOptions(
+                    languages: BoardPickerLanguages.en(),
+                    startDayOfWeek: DateTime.sunday,
+                    pickerFormat: PickerFormat.ymd,
+                    // topMargin: 0,
+                  ),
+                  headerWidget: Container(
+                    height: 80,
+                    margin: const EdgeInsets.all((8)),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      // border: Border.all(color: Colors.blueAccent, width: 4),
+                      borderRadius: BorderRadius.circular(24),
                     ),
-              ),
-            ),
-          );
-              
+                    alignment: Alignment.center,
+                    child: Text(
+                      'Select Date-Range\n(YYYY/MM/DD HH:MM)  ',
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.blueAccent,
+                          ),
+                    ),
+                  ),
+                );
 
-              if (pickedDates != null) {
-                fromDate = pickedDates.start;
-                toDate = pickedDates.end;
-                Future.microtask(() {
-                loadPolylinesWithCustomDates();
-                });
-                log("dates selected $pickedDates");
-              
-              }
-
+                if (pickedDates != null) {
+                  fromDate = pickedDates.start;
+                  toDate = pickedDates.end;
+                  Future.microtask(() {
+                    loadPolylinesWithCustomDates();
+                  });
+                  log("dates selected $pickedDates");
+                }
               },
             ),
           ],
@@ -293,7 +386,6 @@ class _VehicleHistoryPageState extends ConsumerState<VehicleHistoryPage> {
       },
     );
   }
-
 }
 
 class DateUtil {
@@ -305,7 +397,8 @@ class DateUtil {
 
   static DateTime endOfWeek() {
     final today = DateTime.now();
-    final firstDayWeek = DateTime(today.year, today.month, today.day, 23, 59, 59);
+    final firstDayWeek =
+        DateTime(today.year, today.month, today.day, 23, 59, 59);
     return firstDayWeek.subtract(Duration(days: today.weekday + 5));
   }
 
