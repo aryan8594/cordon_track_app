@@ -1,5 +1,6 @@
 import 'package:cordon_track_app/presentation/pages/dashboard_page.dart';
 import 'package:cordon_track_app/presentation/pages/live_map_page.dart';
+import 'package:cordon_track_app/presentation/pages/reports_page.dart';
 import 'package:cordon_track_app/presentation/pages/vehicle_search_list.dart';
 import 'package:flutter/material.dart';
 import 'package:custom_navigation_bar/custom_navigation_bar.dart';
@@ -20,7 +21,7 @@ class _CustomNavBarState extends State<CustomNavBar> {
     DashboardPage(),
     VehicleSearchList(),
     LiveMapPage(),
-    const Placeholder(),
+    ReportsPage(),
     const Placeholder()
   ];
 

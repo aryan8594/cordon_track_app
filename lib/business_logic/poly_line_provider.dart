@@ -1,6 +1,7 @@
 // StateNotifier for managing polyline state for a specific vehicle
 import 'dart:developer';
 
+import 'package:cordon_track_app/business_logic/map_controller_provider.dart';
 import 'package:cordon_track_app/data/data_providers/vehicle_history_provider.dart';
 import 'package:cordon_track_app/data/models/polyline_state_model.dart';
 import 'package:cordon_track_app/data/models/vehicle_history_model.dart';
@@ -31,9 +32,9 @@ String convertSecondsToHoursMinutes(int secondsInt) {
 
 class PolyLineNotifier extends StateNotifier<PolylineStateModel> {
   final Ref ref;
-
+  List<History>? vehicleHistory; // Store history data here
   List<LatLng> polylineCoordinates = []; // Store the coordinates for playback
-   bool get isPlaying => state.isPlaying;
+  bool get isPlaying => state.isPlaying;
   PolyLineNotifier(this.ref) : super(PolylineStateModel());
 
   // Method to toggle play/pause
@@ -42,6 +43,12 @@ class PolyLineNotifier extends StateNotifier<PolylineStateModel> {
     log("Playback is now ${state.isPlaying ? 'playing' : 'paused'}");
   }
 
+  void pausePlayback() {
+  state = state.copyWith(isPlaying: false);
+  log("Playback is paused explicitly.");
+}
+
+
   // // Method to update playback speed
   // void setPlaybackSpeed(double speed) {
   //   state = state.copyWith(playbackSpeed: speed);
@@ -49,55 +56,61 @@ class PolyLineNotifier extends StateNotifier<PolylineStateModel> {
 
   // Method to update current index during playback
   void setCurrentIndex(int index) async {
-  if (index >= 0 && index < state.polylineCoordinates.length) {
-    final newPosition = state.polylineCoordinates[index];
-    final direction = state.markers
-            .firstWhere(
-              (marker) => marker.position == newPosition,
-              orElse: () => Marker(markerId: const MarkerId('default')),
-            )
-            .rotation ??
-        0.0;
+    if (index >= 0 && index < state.polylineCoordinates.length) {
+      final newPosition = state.polylineCoordinates[index];
+      final direction = state.markers
+              .firstWhere(
+                (marker) => marker.position == newPosition,
+                orElse: () => Marker(markerId: const MarkerId('default')),
+              )
+              .rotation ??
+          0.0;
+    
 
-    log("setCurrentIndex called with index: $index, newPosition: $newPosition, direction: $direction");
+      updatePlaybackMarker(newPosition, direction, index);
 
-    // Update the playback marker
-    updatePlaybackMarker(newPosition, direction);
-
-    // Update state
-    state = state.copyWith(currentIndex: index);
-
-    log("State updated with currentIndex: $index");
-  } else {
-    log("Index out of bounds in setCurrentIndex: $index");
+      state = state.copyWith(currentIndex: index);
+    } else {
+      log("Index out of bounds: $index");
+    }
   }
+
+  // Method to update the playback marker position
+void updatePlaybackMarker(LatLng position, double direction, int index) async {
+  if (vehicleHistory == null || index < 0 || index >= vehicleHistory!.length) {
+    log("Invalid index or vehicleHistory not loaded.");
+    return;
+  }
+
+  final historyData = vehicleHistory![index];
+  final dateTime = historyData.datetime ?? 'Unknown DateTime';
+  final speed = historyData.speed ?? 'Unknown Speed';
+
+  final BitmapDescriptor customPlaybackIcon = await BitmapDescriptor.asset(
+    const ImageConfiguration(size: Size(24, 45)),
+    'lib/presentation/assets/cab_blue.png',
+  );
+
+  final Marker newPlaybackMarker = Marker(
+    anchor: const Offset(0.5, 0.5),
+    markerId: const MarkerId('playbackMarker'),
+    rotation: direction,
+    position: position,
+    icon: customPlaybackIcon,
+    flat: true,
+    infoWindow: InfoWindow(
+      anchor: const Offset(0.5, 0.5),
+      title: dateTime,
+      snippet: 'Speed: $speed km/h',
+    ),
+  );
+
+  state = state.copyWith(playbackMarker: newPlaybackMarker);
+  final controller = ref.read(mapControllerProvider.notifier);
+  controller.showMarkerInfoWindow(const MarkerId('playbackMarker'));
 }
 
 
-
-
-
-
-  // Method to update the playback marker position
-  void updatePlaybackMarker(LatLng position, double direction) async {
-
-    final BitmapDescriptor customPlaybackIcon = await BitmapDescriptor.asset(
-        const ImageConfiguration(size: Size(35, 63)),
-        'lib/presentation/assets/cab_blue.png',
-      );
-
-    final Marker newPlaybackMarker = Marker(
-      anchor: const Offset(0.5, 0.5),
-      markerId: const MarkerId('playbackMarker'),
-      rotation: direction,
-      position: position,
-      icon: customPlaybackIcon,
-      flat: true,
-    );
-
-    // Update the state to trigger a rebuild
-    state = state.copyWith(playbackMarker: newPlaybackMarker);
-  }
 
   // Load Vehicle History and Polylines
   Future<void> loadVehicleHistoryPolylineMarkers(
@@ -109,15 +122,16 @@ class PolyLineNotifier extends StateNotifier<PolylineStateModel> {
     log("PolyLineNotifier: Clearing polyline and markers state.");
 
     // Fetch new history data from the repository
-    final vehicleHistory = await ref
-        .read(historyVehicleRepositoryProvider)
-        .fetchVehicleHistory(vehicleId, fromDate, toDate);
+     final response = await ref
+      .read(historyVehicleRepositoryProvider)
+      .fetchVehicleHistory(vehicleId, fromDate, toDate);
 
-    if (vehicleHistory != null && vehicleHistory.data?.history != null) {
-      final historyData = vehicleHistory.data!.history!;
+  if (response != null && response.data?.history != null) {
+    vehicleHistory = response.data!.history; // Set the local variable
+    log("Vehicle history loaded with ${vehicleHistory!.length} entries.");
 
       // Step 1: Create polyline coordinates
-      final List<LatLng> polylineCoordinates = historyData.map((history) {
+      final List<LatLng> polylineCoordinates = vehicleHistory!.map((history) {
         return LatLng(
           double.parse(history.lat!),
           double.parse(history.lng!),
@@ -148,16 +162,22 @@ class PolyLineNotifier extends StateNotifier<PolylineStateModel> {
       );
 
       final BitmapDescriptor customPlaybackIcon = await BitmapDescriptor.asset(
-        const ImageConfiguration(size: Size(35, 63)),
+        const ImageConfiguration(size: Size(25, 45)),
         'lib/presentation/assets/cab_blue.png',
       );
 
-      final Set<Marker> newMarkers = historyData.map((history) {
+      final Set<Marker> newMarkers = vehicleHistory!.map((history) {
         double lat = double.tryParse(history.lat ?? '0') ?? 0;
         double lng = double.tryParse(history.lng ?? '0') ?? 0;
         double rotation = double.tryParse(history.direction ?? '0') ?? 0;
 
         return Marker(
+          onTap:(){
+            if (ref.read(polyLineProvider(vehicleId).notifier).isPlaying) {
+      ref.read(polyLineProvider(vehicleId).notifier).pausePlayback();
+      log("Playback paused by tapping marker.");
+    }
+          },
           consumeTapEvents: history.duration! > 60 ? false : true,
           anchor: const Offset(0.5, 0.5),
           markerId: MarkerId(history.id ?? DateTime.now().toString()),
@@ -186,6 +206,10 @@ class PolyLineNotifier extends StateNotifier<PolylineStateModel> {
           position: polylineCoordinates.first,
           icon: customPlaybackIcon,
           flat: true,
+          infoWindow: InfoWindow(
+              anchor: const Offset(0.5, 0.5),
+              title: 'DateTime',
+              snippet: 'Speed'),
         );
       } else {
         log("No coordinates found during initial load.");

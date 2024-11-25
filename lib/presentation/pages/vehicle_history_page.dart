@@ -69,12 +69,14 @@ class _VehicleHistoryPageState extends ConsumerState<VehicleHistoryPage> {
 
     // Combine existing markers with the playback marker (if available)
     final Set<Marker> allMarkers = {
-      ...polylineState.markers,
-      if (polylineState.playbackMarker != null) polylineState.playbackMarker!,
+      ...polylineState.markers, // Add the static markers first
+      if (polylineState.playbackMarker != null)
+        polylineState.playbackMarker!, // Add the playback marker last
     };
 
     // Log the current index and marker to ensure they are updating
-    log("Rendering map with currentIndex: ${polylineState.currentIndex}");
+    log("Rendering map with updated currentIndex: ${polylineState.currentIndex}");
+
     log("Total polyline coordinates: ${polylineState.polylineCoordinates.length}");
     log("Playback marker: ${polylineState.playbackMarker?.position}");
 
@@ -106,25 +108,34 @@ class _VehicleHistoryPageState extends ConsumerState<VehicleHistoryPage> {
       body: Column(
         children: [
           Expanded(
-            child: GoogleMap(
-              initialCameraPosition: const CameraPosition(
-                target: LatLng(12.976692, 77.576249),
-                zoom: 14.0,
-              ),
-              onMapCreated: (controller) {
-                ref
-                    .read(mapControllerProvider.notifier)
-                    .initializeController(controller);
-                controller.setMapStyle(Utils.mapStyles);
-              },
-              markers: allMarkers,
-              polylines: polylineState.polylines,
-              myLocationEnabled: true,
-              compassEnabled: true,
-              rotateGesturesEnabled: false,
+            child: Stack(
+              children: [
+                GoogleMap(
+                  initialCameraPosition: const CameraPosition(
+                    target: LatLng(12.976692, 77.576249),
+                    zoom: 14.0,
+                  ),
+                  onMapCreated: (controller) {
+                    ref
+                        .read(mapControllerProvider.notifier)
+                        .initializeController(controller);
+                    controller.setMapStyle(Utils.mapStyles);
+                    controller
+                        .showMarkerInfoWindow(const MarkerId('playbackMarker'));
+                  },
+                  markers: allMarkers,
+                  polylines: polylineState.polylines,
+                  myLocationEnabled: true,
+                  compassEnabled: true,
+                  rotateGesturesEnabled: false,
+                ),
+              ],
             ),
           ),
-          Padding(
+          Container(
+            color: Colors.white70,
+            height: 60,
+            width: double.maxFinite,
             padding: const EdgeInsets.all(8.0),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -132,22 +143,21 @@ class _VehicleHistoryPageState extends ConsumerState<VehicleHistoryPage> {
                 // Play/Pause Button
                 IconButton(
                   icon: Icon(
-                    polylineState.isPlaying ? Icons.pause : Icons.play_arrow,
-                  ),
+                      polylineState.isPlaying ? Icons.pause : Icons.play_arrow),
                   onPressed: () {
                     polylineNotifier.togglePlayPause();
-
                     if (polylineNotifier.isPlaying) {
-                      log("Starting playback...");
+                      log("Play button pressed.");
                       ref
                           .read(playbackTimerProvider.notifier)
                           .startPlayback(widget.vehicleId);
                     } else {
-                      log("Stopping playback...");
+                      log("Pause button pressed.");
                       ref.read(playbackTimerProvider.notifier).stopPlayback();
                     }
                   },
                 ),
+
                 // Playback Slider
                 Expanded(
                   child: Slider(
@@ -342,7 +352,7 @@ class _VehicleHistoryPageState extends ConsumerState<VehicleHistoryPage> {
                 final pickedDates = await showBoardDateTimeMultiPicker(
                   context: context,
                   pickerType: DateTimePickerType.datetime,
-                  // minimumDate: DateTime.now().add(const Duration(days: 1)),
+                  // minimumDate: DateTime.now().add(const Duration(days: 7)),
                   startDate: fromDate,
                   endDate: toDate,
                   options: const BoardDateTimeOptions(

@@ -70,7 +70,18 @@ class _LiveMapPageState extends ConsumerState<LiveMapPage> {
     // final mapController = ref.read(mapControllerProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Live Vehicle Tracking')),
+      appBar: AppBar(leading:Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            SizedBox(width: 10,),
+            Image.asset("lib/presentation/assets/cordon_logo_2.png", height: 25,scale: 10,),
+          ],
+        ),
+        actions: [
+          IconButton(onPressed: (){}, icon: Icon(Icons.notifications, size: 25,)),
+          SizedBox(width: 10,)
+        ],
+        leadingWidth: 120,),
       body: Stack(
         children: [
           GoogleMap(
@@ -161,125 +172,6 @@ class _LiveMapPageState extends ConsumerState<LiveMapPage> {
   }
 }
 
-
-// class LiveMapPage extends ConsumerWidget {
-//     Set<Marker> _markers = {};
-//     Map<String, BitmapDescriptor> _iconCache = {};
-//     bool _isLoading = true;
-//      Timer? _updateTimer;
-
-//   @override
-//    Widget build(BuildContext context, WidgetRef ref) {
-//     _updateTimer?.cancel();
-//     final markers = ref.read(markerProvider); // Watch marker updates
-//      final filteredVehicles = ref.watch(filteredVehiclesProvider);
-//      final isSearchVisible = ref.watch(isSearchVisibleProvider);
-//      final _mapController = ref.read(mapControllerProvider);
-
-
-//      _updateTimer = Timer.periodic(const Duration(seconds: 10), (timer) {
-//       // Check if the widget is still mounted before updating markers
-//       if (context.mounted) {
-//         ref.read(markerProvider.notifier).updateMarkers(context);
-//       } else {
-//         timer.cancel();
-//       }
-//     });
-
-//     return Scaffold(
-//       appBar: AppBar(title: const Text('Live Vehicle Tracking')),
-//       body: Stack(
-//         children: [
-//           GoogleMap(
-//             key: PageStorageKey('MapPage'),
-//             markers: markers,
-//             initialCameraPosition: const CameraPosition(
-//               target: LatLng(12.976692, 77.576249),
-//               zoom: 10,
-//             ),
-            
-//             onMapCreated: (_mapController) {
-//               _mapController.setMapStyle(Utils.mapStyles);
-//               ref.read(markerProvider.notifier).updateMarkers(context);
-//               ref.watch(markerProvider.notifier).attachMapController(_mapController);
-
-              
-//             },
-          
-//             myLocationEnabled: true,
-//             compassEnabled: true,
-//             rotateGesturesEnabled: false,
-//           ),
-
-//           Positioned(
-//             right: 1,
-//             child: IconButton(  
-//               icon: Icon(isSearchVisible ? Icons.close : Icons.search),
-//               onPressed: () {
-//                 ref.read(isSearchVisibleProvider.notifier).state = !isSearchVisible;
-//                 if (!isSearchVisible) {
-//                   ref.read(searchQueryProvider.notifier).state = ''; // Clear search query when closed
-//                 }
-//               },
-//             ),
-//           ),
-
-//           // Search bar and filtered vehicle list
-//           if (isSearchVisible)
-          
-//           Positioned(
-//             top: 40,
-//             left: 10,
-//             right: 10,
-//             child: Column(
-//               children: [
-//                 Row(
-//                   children: [
-//                     Expanded(
-//                       child: TextField(
-//                         onChanged: (query) => ref.read(searchQueryProvider.notifier).state = query,
-//                         decoration: const InputDecoration(
-//                           hintText: 'Search by RTO...',
-//                           border: OutlineInputBorder(),
-//                         ),
-//                       ),
-//                     ),
-
-//                   ],
-//                 ),
-//                 const SizedBox(height: 10),
-//                 if (filteredVehicles.isNotEmpty)
-//                   Container(
-//                     height: 150,
-//                     decoration: BoxDecoration(
-//                       color: Colors.white.withOpacity(0.95),
-//                       borderRadius: BorderRadius.circular(5),
-//                       boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 4)],
-//                     ),
-//                     child: ListView.builder(
-//                       itemCount: filteredVehicles.length,
-//                       itemBuilder: (context, index) {
-//                         final vehicle = filteredVehicles[index];
-//                         return ListTile(
-//                           title: Text(vehicle.rto ?? 'Unknown RTO'),
-//                           subtitle: Text('Vehicle ID: ${vehicle.id}'),
-//                           onTap: (){
-//                              navigateToVehicle(ref, vehicle);
-//                              ref.read(isSearchVisibleProvider.notifier).state = !isSearchVisible;
-//                           }
-//                         );
-//                       },
-//                     ),
-//                   ),
-//               ],
-//             ),
-//           ),
-//         ],
-//       ),
-//     );
-//   }
- 
-// }
 
 class Utils {
   static String mapStyles = '''[

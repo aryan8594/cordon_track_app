@@ -85,7 +85,9 @@ class SingleMarkerNotifier extends StateNotifier<Set<Marker>> {
               anchor: const Offset(0.5, 0.5),
               title: vehicle.rto ?? 'Unknown RTO',
               snippet: 'Speed: ${vehicle.speed ?? 'N/A'} km/h',
+              
             ),
+            flat: true,
             rotation: rotation,
             onTap: () async {
 
@@ -214,6 +216,7 @@ class SingleMarkerNotifier extends StateNotifier<Set<Marker>> {
       positionParam: interpolatedPosition,
       rotationParam: rotation,
       iconParam: newIcon,
+      
       infoWindowParam: InfoWindow(
         anchor: const Offset(0.5, 0.5),
         title: vehicle.rto ?? 'Unknown RTO',

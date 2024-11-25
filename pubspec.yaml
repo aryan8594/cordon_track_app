@@ -48,6 +48,9 @@ dependencies:
   board_datetime_picker: ^2.1.5
   we_slide: ^2.4.0
   basic_utils: ^5.7.0
+  custom_info_window: ^1.0.1
+  data_table_2: ^2.5.15
+  riverpod_lint: ^2.6.3
 
 dev_dependencies:
   flutter_test:

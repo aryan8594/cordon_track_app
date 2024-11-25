@@ -55,10 +55,18 @@ class _VehicleSearchListState extends ConsumerState<VehicleSearchList> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.white,
-        title: const Text(
-          "Vehicle List",
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+        leading:Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            SizedBox(width: 10,),
+            Image.asset("lib/presentation/assets/cordon_logo_2.png", height: 25,scale: 10,),
+          ],
         ),
+        actions: [
+          IconButton(onPressed: (){}, icon: Icon(Icons.notifications, size: 25,)),
+          SizedBox(width: 10,)
+        ],
+        leadingWidth: 120,
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(60.0),
           child: Padding(
@@ -103,6 +111,7 @@ class _VehicleSearchListState extends ConsumerState<VehicleSearchList> {
 
                 var vehicle = filteredVehicles[index];
                 return Card(
+                  color: Colors.white,
                   margin:
                       const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
                   child: ListTile(
