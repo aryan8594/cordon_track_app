@@ -42,25 +42,16 @@ class ReportsPage extends StatelessWidget {
       description: "Check daily vehicle summaries, including trips and usage patterns.",
       route: "/dailyReport",
     ),
+    ReportCardData(
+      title: "Geofence Report",
+      description: "Check detailed Geofence summaries with specific locations and timings.",
+      route: "/geofenceReport",
+    ),
   ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        leading:Row(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: [
-            SizedBox(width: 10,),
-            Image.asset("lib/presentation/assets/cordon_logo_2.png", height: 25,scale: 10,),
-          ],
-        ),
-        actions: [
-          IconButton(onPressed: (){}, icon: Icon(Icons.notifications, size: 25,)),
-          SizedBox(width: 10,)
-        ],
-        leadingWidth: 120,
-      ),
       body: ListView.builder(
         itemCount: reportCardData.length,
         itemBuilder: (context, index) {

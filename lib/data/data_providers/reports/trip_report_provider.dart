@@ -6,7 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// Repository Provider
 final tripReportRepositoryProvider = Provider<TripReportRepository>((ref) {
-  return TripReportRepository();
+  return TripReportRepository(ref);
 });
 /// State Notifier for managing API logic
 class TripReportNotifier extends StateNotifier<AsyncValue<TripReportModel>> {

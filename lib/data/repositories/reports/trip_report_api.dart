@@ -1,13 +1,16 @@
 import 'dart:convert';
 import 'dart:developer';
+import 'package:cordon_track_app/data/data_providers/login_provider.dart';
 import 'package:cordon_track_app/data/models/reports/trip_report_model.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 
 class TripReportRepository {
-  final String token = "8fce96fe1288a2c2b5affeba94201267"; // Replace with dynamic token if required
   final String start = "0";
   final String length = "100";
   final String draw = "5";
+  final Ref ref;
+  TripReportRepository(this.ref);
 
   Future<dynamic> fetchTripReport({
 
@@ -15,6 +18,7 @@ class TripReportRepository {
     required DateTime toDate,
     required String id,
   }) async {
+    String token = ref.watch(tokenProvider.notifier).state;
 
     final response = await http.get(
       Uri.parse("https://cordontrack.com/api/v1/report/Trip?start=${start}&length=${length}&from_date=${fromDate.toIso8601String()}&to_date=${toDate.toIso8601String()}&draw=${draw}&id=${id}"),

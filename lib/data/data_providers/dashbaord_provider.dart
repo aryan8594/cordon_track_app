@@ -6,25 +6,39 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// Repository Provider
 final dashboardRepositoryProvider = Provider<DashboardRepository>((ref) {
-  return DashboardRepository();
+  return DashboardRepository(ref);
 });
 
 /// State Notifier for managing dashboard data
+/// State Notifier for managing dashboard data with caching
 class DashboardNotifier extends StateNotifier<AsyncValue<DashboardModel>> {
   final DashboardRepository repository;
+
+  // Cache the dashboard data
+  DashboardModel? _cachedData;
 
   DashboardNotifier(this.repository) : super(const AsyncValue.loading());
 
   Future<void> fetchDashboardData() async {
     try {
-      state = const AsyncValue.loading();
+      // If cached data exists, show it immediately
+      if (_cachedData != null) {
+        state = AsyncValue.data(_cachedData!);
+      } else {
+        state = const AsyncValue.loading();
+      }
+
+      // Fetch fresh data from the API
       final result = await repository.fetchDashboardData();
       if (result != null) {
-        state = AsyncValue.data(result);
+        _cachedData = result; // Update the cache
+        state = AsyncValue.data(result); // Update state
         log("Dashboard data fetched successfully.");
       } else {
-        state = AsyncValue.error("Failed to fetch dashboard data.", StackTrace.current);
-
+        state = AsyncValue.error(
+          "Failed to fetch dashboard data.",
+          StackTrace.current,
+        );
       }
     } catch (error, stackTrace) {
       log("Error fetching dashboard data: $error", stackTrace: stackTrace);
@@ -32,6 +46,7 @@ class DashboardNotifier extends StateNotifier<AsyncValue<DashboardModel>> {
     }
   }
 }
+
 
 /// Provider for the StateNotifier
 final dashboardProvider =

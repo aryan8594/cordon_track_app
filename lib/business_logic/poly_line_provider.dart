@@ -18,6 +18,9 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 /// StateNotifier for managing polyline states
 // PolyLineNotifier to manage both arrow markers and polylines
 
+final historyVehicleProvider =
+    StateProvider<VehicleHistoryModel?>((ref) => null);
+
 String convertSecondsToHoursMinutes(int secondsInt) {
   // Create a Duration object
   Duration duration = Duration(seconds: secondsInt);
@@ -35,7 +38,7 @@ class PolyLineNotifier extends StateNotifier<PolylineStateModel> {
   List<History>? vehicleHistory; // Store history data here
   List<LatLng> polylineCoordinates = []; // Store the coordinates for playback
   bool get isPlaying => state.isPlaying;
-  PolyLineNotifier(this.ref) : super(PolylineStateModel());
+  PolyLineNotifier(this.ref) : super(const PolylineStateModel());
 
   // Method to toggle play/pause
   void togglePlayPause() {
@@ -44,10 +47,9 @@ class PolyLineNotifier extends StateNotifier<PolylineStateModel> {
   }
 
   void pausePlayback() {
-  state = state.copyWith(isPlaying: false);
-  log("Playback is paused explicitly.");
-}
-
+    state = state.copyWith(isPlaying: false);
+    log("Playback is paused explicitly.");
+  }
 
   // // Method to update playback speed
   // void setPlaybackSpeed(double speed) {
@@ -61,11 +63,10 @@ class PolyLineNotifier extends StateNotifier<PolylineStateModel> {
       final direction = state.markers
               .firstWhere(
                 (marker) => marker.position == newPosition,
-                orElse: () => Marker(markerId: const MarkerId('default')),
+                orElse: () => const Marker(markerId: const MarkerId('default')),
               )
               .rotation ??
           0.0;
-    
 
       updatePlaybackMarker(newPosition, direction, index);
 
@@ -76,41 +77,54 @@ class PolyLineNotifier extends StateNotifier<PolylineStateModel> {
   }
 
   // Method to update the playback marker position
-void updatePlaybackMarker(LatLng position, double direction, int index) async {
-  if (vehicleHistory == null || index < 0 || index >= vehicleHistory!.length) {
-    log("Invalid index or vehicleHistory not loaded.");
-    return;
-  }
+  void updatePlaybackMarker(
+      LatLng position, double direction, int index) async {
+    if (vehicleHistory == null ||
+        index < 0 ||
+        index >= vehicleHistory!.length) {
+      log("Invalid index or vehicleHistory not loaded.");
+      return;
+    }
 
-  final historyData = vehicleHistory![index];
-  final dateTime = historyData.datetime ?? 'Unknown DateTime';
-  final speed = historyData.speed ?? 'Unknown Speed';
+    final historyData = vehicleHistory![index];
+    final dateTime = historyData.datetime ?? 'Unknown DateTime';
+    final speed = historyData.speed ?? 'Unknown Speed';
+    final ignition = historyData.ignitionStatus ?? "Unnkown";
+    final stoppage = historyData.duration ?? 0;
 
-  final BitmapDescriptor customPlaybackIcon = await BitmapDescriptor.asset(
-    const ImageConfiguration(size: Size(24, 45)),
-    'lib/presentation/assets/cab_blue.png',
-  );
+    String ignitionStatus = "ON";
+    ignition == "1" ? ignitionStatus = "ON" : ignitionStatus = "OFF";
 
-  final Marker newPlaybackMarker = Marker(
-    anchor: const Offset(0.5, 0.5),
-    markerId: const MarkerId('playbackMarker'),
-    rotation: direction,
-    position: position,
-    icon: customPlaybackIcon,
-    flat: true,
-    infoWindow: InfoWindow(
+    final BitmapDescriptor customPlaybackIcon = await BitmapDescriptor.asset(
+      const ImageConfiguration(size: Size(24, 45)),
+      'lib/presentation/assets/cab_blue.png',
+    );
+
+    final Marker newPlaybackMarker = Marker(
       anchor: const Offset(0.5, 0.5),
-      title: dateTime,
-      snippet: 'Speed: $speed km/h',
-    ),
-  );
+      markerId: const MarkerId('playbackMarker'),
+      rotation: direction,
+      position: position,
+      icon: customPlaybackIcon,
+      flat: true,
+      infoWindow: InfoWindow(
+        anchor: const Offset(0.5, 0.5),
+        title: dateTime,
+        snippet: stoppage > 60
+            ? 'Stoppage Duration: ${convertSecondsToHoursMinutes(stoppage)}'
+            : 'Speed: ${speed} km/h',
+      ),
+    );
 
-  state = state.copyWith(playbackMarker: newPlaybackMarker);
-  final controller = ref.read(mapControllerProvider.notifier);
-  controller.showMarkerInfoWindow(const MarkerId('playbackMarker'));
-}
-
-
+    state = state.copyWith(playbackMarker: newPlaybackMarker);
+    final controller = ref.read(mapControllerProvider.notifier);
+    // Center the marker if it goes out of bounds
+    if (mounted) {
+      await controller.centerMarkerIfOutOfBounds(position);
+    }
+    // Force playbackMarker to be above the polyline and other markers
+    controller.showMarkerInfoWindow(const MarkerId('playbackMarker'));
+  }
 
   // Load Vehicle History and Polylines
   Future<void> loadVehicleHistoryPolylineMarkers(
@@ -122,13 +136,14 @@ void updatePlaybackMarker(LatLng position, double direction, int index) async {
     log("PolyLineNotifier: Clearing polyline and markers state.");
 
     // Fetch new history data from the repository
-     final response = await ref
-      .read(historyVehicleRepositoryProvider)
-      .fetchVehicleHistory(vehicleId, fromDate, toDate);
+    final response = await ref
+        .read(historyVehicleRepositoryProvider)
+        .fetchVehicleHistory(vehicleId, fromDate, toDate);
+    ref.read(historyVehicleProvider.notifier).state = response;
 
-  if (response != null && response.data?.history != null) {
-    vehicleHistory = response.data!.history; // Set the local variable
-    log("Vehicle history loaded with ${vehicleHistory!.length} entries.");
+    if (response != null && response.data?.history != null) {
+      vehicleHistory = response.data!.history; // Set the local variable
+      log("Vehicle history loaded with ${vehicleHistory!.length} entries.");
 
       // Step 1: Create polyline coordinates
       final List<LatLng> polylineCoordinates = vehicleHistory!.map((history) {
@@ -172,11 +187,11 @@ void updatePlaybackMarker(LatLng position, double direction, int index) async {
         double rotation = double.tryParse(history.direction ?? '0') ?? 0;
 
         return Marker(
-          onTap:(){
+          onTap: () {
             if (ref.read(polyLineProvider(vehicleId).notifier).isPlaying) {
-      ref.read(polyLineProvider(vehicleId).notifier).pausePlayback();
-      log("Playback paused by tapping marker.");
-    }
+              ref.read(polyLineProvider(vehicleId).notifier).pausePlayback();
+              log("Playback paused by tapping marker.");
+            }
           },
           consumeTapEvents: history.duration! > 60 ? false : true,
           anchor: const Offset(0.5, 0.5),
@@ -206,10 +221,8 @@ void updatePlaybackMarker(LatLng position, double direction, int index) async {
           position: polylineCoordinates.first,
           icon: customPlaybackIcon,
           flat: true,
-          infoWindow: InfoWindow(
-              anchor: const Offset(0.5, 0.5),
-              title: 'DateTime',
-              snippet: 'Speed'),
+          infoWindow: const InfoWindow(
+              anchor: Offset(0.5, 0.5), title: 'DateTime', snippet: 'Speed'),
         );
       } else {
         log("No coordinates found during initial load.");
@@ -233,20 +246,20 @@ void updatePlaybackMarker(LatLng position, double direction, int index) async {
 }
 
 /// Providers for Polyline and Marker
-final polyLineProvider =
-    StateNotifierProvider.family<PolyLineNotifier, PolylineStateModel, String>(
+final polyLineProvider = StateNotifierProvider.family
+    .autoDispose<PolyLineNotifier, PolylineStateModel, String>(
   (ref, vehicleId) => PolyLineNotifier(ref),
 );
 
 /// Selector Providers for Polyline and Marker
 final polylineStateProvider =
-    Provider.family<Set<Polyline>, String>((ref, vehicleId) {
+    Provider.family.autoDispose<Set<Polyline>, String>((ref, vehicleId) {
   final polylineState = ref.watch(polyLineProvider(vehicleId));
   return polylineState.polylines;
 });
 
 final markerStateProvider =
-    Provider.family<Set<Marker>, String>((ref, vehicleId) {
+    Provider.family.autoDispose<Set<Marker>, String>((ref, vehicleId) {
   final polylineState = ref.watch(polyLineProvider(vehicleId));
   return polylineState.markers;
 });

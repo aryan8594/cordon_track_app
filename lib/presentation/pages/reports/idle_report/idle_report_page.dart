@@ -3,24 +3,25 @@ import 'dart:developer';
 import 'package:board_datetime_picker/board_datetime_picker.dart';
 import 'package:cordon_track_app/business_logic/search_query_provider.dart';
 import 'package:cordon_track_app/business_logic/vehicle_search_provider.dart';
-import 'package:cordon_track_app/data/data_providers/reports/distance_report_provider.dart';
+import 'package:cordon_track_app/data/data_providers/reports/idle_report_provider.dart';
 import 'package:cordon_track_app/data/data_providers/reports/ignition_report_provider.dart';
+import 'package:cordon_track_app/data/data_providers/reports/stoppage_report_provider.dart';
 import 'package:cordon_track_app/data/data_providers/reports/travelled_path_provider.dart';
-import 'package:cordon_track_app/presentation/pages/reports/distance%20travelled/distance_report_results.dart';
-import 'package:cordon_track_app/presentation/pages/reports/ignition%20report/ignition_report_results.dart';
-import 'package:cordon_track_app/presentation/pages/reports/travelled%20path/travelled_path_result.dart';
+import 'package:cordon_track_app/presentation/pages/reports/idle_report/idle_report_result.dart';
+import 'package:cordon_track_app/presentation/pages/reports/stoppage_report/stoppage_report_results.dart';
+import 'package:cordon_track_app/presentation/pages/reports/travelled_path/travelled_path_result.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:data_table_2/data_table_2.dart';
 
-class IgnitionReportPage extends ConsumerStatefulWidget {
-  const IgnitionReportPage({Key? key}) : super(key: key);
+class IdleReportPage extends ConsumerStatefulWidget {
+  const IdleReportPage({Key? key}) : super(key: key);
 
   @override
-  _IgnitionReportPageState createState() => _IgnitionReportPageState();
+  _IdleReportState createState() => _IdleReportState();
 }
 
-class _IgnitionReportPageState extends ConsumerState<IgnitionReportPage> {
+class _IdleReportState extends ConsumerState<IdleReportPage> {
   DateTime today = DateTime.now();
   DateTime fromDate = DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day, 0, 0, 0);
   DateTime toDate = DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day, 23, 59, 59);
@@ -31,11 +32,11 @@ class _IgnitionReportPageState extends ConsumerState<IgnitionReportPage> {
 
   @override
   Widget build(BuildContext context) {
-    final ignitonReport = ref.watch(ignitionReportProvider);
+    final idleReport = ref.watch(idleReportProvider);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Ignition Report"),
+        title: const Text("Idle Report"),
         bottom: PreferredSize(
             preferredSize: const Size.fromHeight(10), child: Container()),
       ),
@@ -106,6 +107,57 @@ class _IgnitionReportPageState extends ConsumerState<IgnitionReportPage> {
                             ),
                     ),
                   const SizedBox(height: 8),
+                  // Time Difference Input Field
+                  DropdownButtonFormField<String>(
+                    value: timeDifference, // Bind the currently selected value
+                    decoration: InputDecoration(
+                      labelText: 'Idle Time filter',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8.0),
+                      ),
+                    ),
+                    items: const [
+                      DropdownMenuItem(
+                        value: '0',
+                        child: Text('None'),
+                      ),
+                      DropdownMenuItem(
+                        value: '120',
+                        child: Text('More than 2 Minute'),
+                      ),
+                      DropdownMenuItem(
+                        value: '600',
+                        child: Text('More than 10 minutes'),
+                      ),
+                      DropdownMenuItem(
+                        value: '1200',
+                        child: Text('More than 20 minutes'),
+                      ),
+                      DropdownMenuItem(
+                        value: '2400',
+                        child: Text('More than 40 minutes'),
+                      ),
+                      DropdownMenuItem(
+                        value: '3600',
+                        child: Text('More than 1 hour'),
+                      ),
+                      DropdownMenuItem(
+                        value: '7200',
+                        child: Text('More than 2 hours'),
+                      ),
+                      DropdownMenuItem(
+                        value: '10800',
+                        child: Text('More than 3 hours'),
+                      ),
+                    ],
+                    onChanged: (value) {
+                      setState(() {
+                        timeDifference =
+                            value; // Update the timeDifference when a selection is made
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 8),
                   // Date Range Selector
                   InkWell(
                     onTap: () => showDateRangeSelectionSheet(context),
@@ -137,22 +189,23 @@ class _IgnitionReportPageState extends ConsumerState<IgnitionReportPage> {
                           toDate != null &&
                           vehicleID != null) {
                         ref
-                            .read(ignitionReportProvider.notifier)
-                            .fetchIgnitionReport(
+                            .read(idleReportProvider.notifier)
+                            .fetchIdleReport(
                               id: vehicleID!, // Use selected vehicle ID
                               fromDate: fromDate!,
                               toDate: toDate!,
+                              time: timeDifference ?? "",
                             );
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                              builder: (context) => IgnitionReportResult()),
+                              builder: (context) => IdleReportResult()),
                         );
                       } else {
                         log("Missing vehicle ID or date range");
                       }
                     },
-                    child: const Text("Fetch Ignition Report"),
+                    child: const Text("Fetch Idle Report"),
                   ),
                 ],
               ),
@@ -333,10 +386,11 @@ class _IgnitionReportPageState extends ConsumerState<IgnitionReportPage> {
                 if (pickedDates != null) {
                   fromDate = pickedDates.start;
                   toDate = pickedDates.end;
-                  ref.read(ignitionReportProvider.notifier).fetchIgnitionReport(
+                  ref.read(idleReportProvider.notifier).fetchIdleReport(
                         id: vehicleID!,
                         fromDate: fromDate!,
                         toDate: toDate!,
+                        time: timeDifference!,
                       );
                   log("dates selected $pickedDates");
                 }

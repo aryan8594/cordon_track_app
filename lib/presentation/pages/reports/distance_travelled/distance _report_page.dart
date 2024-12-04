@@ -3,43 +3,36 @@ import 'dart:developer';
 import 'package:board_datetime_picker/board_datetime_picker.dart';
 import 'package:cordon_track_app/business_logic/search_query_provider.dart';
 import 'package:cordon_track_app/business_logic/vehicle_search_provider.dart';
-import 'package:cordon_track_app/data/data_providers/reports/daily_report_provider.dart';
 import 'package:cordon_track_app/data/data_providers/reports/distance_report_provider.dart';
-import 'package:cordon_track_app/data/data_providers/reports/ignition_report_provider.dart';
 import 'package:cordon_track_app/data/data_providers/reports/travelled_path_provider.dart';
-import 'package:cordon_track_app/data/data_providers/reports/trip_report_provider.dart';
-import 'package:cordon_track_app/presentation/pages/reports/daily%20report/daily_report_results.dart';
-import 'package:cordon_track_app/presentation/pages/reports/distance%20travelled/distance_report_results.dart';
-import 'package:cordon_track_app/presentation/pages/reports/ignition%20report/ignition_report_results.dart';
-import 'package:cordon_track_app/presentation/pages/reports/travelled%20path/travelled_path_result.dart';
-import 'package:cordon_track_app/presentation/pages/reports/trip%20report/trip_report_results.dart';
+import 'package:cordon_track_app/presentation/pages/reports/distance_travelled/distance_report_results.dart';
+import 'package:cordon_track_app/presentation/pages/reports/travelled_path/travelled_path_result.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:data_table_2/data_table_2.dart';
 
-class DailyReportPage extends ConsumerStatefulWidget {
-  const DailyReportPage({Key? key}) : super(key: key);
+class DistanceReportPage extends ConsumerStatefulWidget {
+  const DistanceReportPage({Key? key}) : super(key: key);
 
   @override
-  _DailyReportPageState createState() => _DailyReportPageState();
+  _DistanceReportPageState createState() => _DistanceReportPageState();
 }
 
-class _DailyReportPageState extends ConsumerState<DailyReportPage> {
+class _DistanceReportPageState extends ConsumerState<DistanceReportPage> {
   DateTime today = DateTime.now();
   DateTime fromDate = DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day, 0, 0, 0);
   DateTime toDate = DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day, 23, 59, 59);
-  String? timeDifference;
   String selectedRange = 'Today';
   String? vehicleID;
   String? vehicleName;
 
   @override
   Widget build(BuildContext context) {
-    final dailyReport = ref.watch(dailyReportProvider);
+    final distanceReprtState = ref.watch(distanceReportProvider);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Daily Report"),
+        title: const Text("Distance Report"),
         bottom: PreferredSize(
             preferredSize: const Size.fromHeight(10), child: Container()),
       ),
@@ -87,27 +80,44 @@ class _DailyReportPageState extends ConsumerState<DailyReportPage> {
                               child: Text("No vehicles found."),
                             )
                           : ListView.builder(
-                              itemCount: filteredVehicles.length,
-                              itemBuilder: (context, index) {
-                                final vehicle = filteredVehicles[index];
-                                return ListTile(
-                                  title: Text(vehicle.rto ?? 'Unknown RTO'),
-                                  subtitle: Text('Vehicle ID: ${vehicle.id}'),
-                                  onTap: () {
-                                    // Populate the search text field with the RTO
-                                    vehicleName = vehicle.rto ?? '';
-                                    textController.text =
-                                        vehicle.rto ?? ''; // Update text field
-                                    // Update the selected vehicle ID
-                                    vehicleID = vehicle.id.toString();
-                                    log('Selected vehicle ID: $vehicleID');
-                                    ref
-                                        .read(searchQueryProvider.notifier)
-                                        .state = '';
-                                  },
-                                );
+                        itemCount: filteredVehicles.length +
+                            1, // +1 for the "ALL" option
+                        itemBuilder: (context, index) {
+                          if (index == 0) {
+                            // Render the "ALL" option
+                            return ListTile(
+                              title: const Text('ALL'),
+                              subtitle: const Text(
+                                  'Select this option to get all Vehicles Report.'),
+                              onTap: () {
+                                vehicleName = 'ALL';
+                                textController.text =
+                                    'ALL'; // Update text field
+                                vehicleID = 'all';
+                                log('Selected vehicle ID: $vehicleID');
+                                ref.read(searchQueryProvider.notifier).state =
+                                    '';
                               },
-                            ),
+                            );
+                          }
+
+                          // Render the remaining vehicles
+                          final vehicle = filteredVehicles[
+                              index - 1]; // Adjust index for the "ALL" option
+                          return ListTile(
+                            title: Text(vehicle.rto ?? 'Unknown RTO'),
+                            subtitle: Text('Vehicle ID: ${vehicle.id}'),
+                            onTap: () {
+                              vehicleName = vehicle.rto ?? '';
+                              textController.text =
+                                  vehicle.rto ?? ''; // Update text field
+                              vehicleID = vehicle.id.toString();
+                              log('Selected vehicle ID: $vehicleID');
+                              ref.read(searchQueryProvider.notifier).state = '';
+                            },
+                          );
+                        },
+                      ),
                     ),
                   const SizedBox(height: 8),
                   // Date Range Selector
@@ -141,8 +151,8 @@ class _DailyReportPageState extends ConsumerState<DailyReportPage> {
                           toDate != null &&
                           vehicleID != null) {
                         ref
-                            .read(dailyReportProvider.notifier)
-                            .fetchDailyReport(
+                            .read(distanceReportProvider.notifier)
+                            .fetchDistanceReport(
                               id: vehicleID!, // Use selected vehicle ID
                               fromDate: fromDate!,
                               toDate: toDate!,
@@ -150,13 +160,13 @@ class _DailyReportPageState extends ConsumerState<DailyReportPage> {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                              builder: (context) => DailyReportResult()),
+                              builder: (context) => DistanceReportResult()),
                         );
                       } else {
                         log("Missing vehicle ID or date range");
                       }
                     },
-                    child: const Text("Fetch Daily Report"),
+                    child: const Text("Fetch Distance Report"),
                   ),
                 ],
               ),
@@ -337,7 +347,7 @@ class _DailyReportPageState extends ConsumerState<DailyReportPage> {
                 if (pickedDates != null) {
                   fromDate = pickedDates.start;
                   toDate = pickedDates.end;
-                  ref.read(dailyReportProvider.notifier).fetchDailyReport(
+                  ref.read(distanceReportProvider.notifier).fetchDistanceReport(
                         id: vehicleID!,
                         fromDate: fromDate!,
                         toDate: toDate!,

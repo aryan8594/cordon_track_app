@@ -14,10 +14,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 
-void navigateToVehicle(WidgetRef ref, Data vehicle) async {
+void navigateToVehicle(WidgetRef ref, Data vehicle, BuildContext context) async {
   // Completer<GoogleMapController> _controller = Completer();
 
-  if (vehicle.latitude != null && vehicle.longitude != null) {
+  if (vehicle.latitude != null && vehicle.longitude != null ) {
     final position = LatLng(double.parse(vehicle.latitude!), double.parse(vehicle.longitude!));
 
 

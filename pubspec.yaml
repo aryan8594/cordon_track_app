@@ -51,6 +51,15 @@ dependencies:
   custom_info_window: ^1.0.1
   data_table_2: ^2.5.15
   riverpod_lint: ^2.6.3
+  pie_chart: ^5.4.0
+  carousel_slider: ^5.0.0
+  passwordfield: ^0.2.0
+  shared_preferences: ^2.3.3
+  share_plus: ^10.1.2
+  url_launcher: ^6.3.1
+  permission_handler: ^11.3.1
+  geolocator: ^13.0.2
+  webview_flutter: ^4.10.0
 
 dev_dependencies:
   flutter_test:
@@ -91,6 +100,12 @@ flutter:
     - lib/presentation/assets/stop_marker.png
     - lib/presentation/assets/cab_blue.png
     - lib/presentation/assets/truck_blue.png
+    - lib/presentation/assets/caroselBG.png
+    - lib/presentation/assets/carosel1.png
+    - lib/presentation/assets/carosel2.png
+    - lib/presentation/assets/carosel3.png
+    - lib/presentation/assets/carosel4.png
+    - lib/presentation/assets/
 
   #   - images/a_dot_ham.jpeg
 

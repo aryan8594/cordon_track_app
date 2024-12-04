@@ -9,6 +9,8 @@ import '../data/data_providers/live_vehicle_provider.dart';
 class VehicleSearchNotifier extends StateNotifier<List<Data>> {
   final Ref ref;
   List<Data> _allVehicles = [];
+  String _currentQuery = ''; // To store the current search query
+  String? _currentDropdownFilter; // To store the current dropdown filter
 
   VehicleSearchNotifier(this.ref) : super([]) {
     _init();
@@ -17,29 +19,71 @@ class VehicleSearchNotifier extends StateNotifier<List<Data>> {
     ref.listen<AsyncValue<List<Data>?>>(liveVehicleProvider, (previous, next) {
       if (next.hasValue && next.value != null) {
         _allVehicles = next.value!;
-        state = _allVehicles; // Update the state with new data
+        _reapplyFilters(); // Reapply query and filter after refresh
       }
     });
   }
 
+  // Getters to expose current query and filter
+  String get currentQuery => _currentQuery;
+  String? get currentDropdownFilter => _currentDropdownFilter;
+
   Future<void> _init() async {
-    // Load initial data
     final liveVehicle = await ref.read(liveVehicleProvider.future);
     if (liveVehicle != null) {
       _allVehicles = liveVehicle;
-      state = _allVehicles; // Initially display all vehicles
+      _reapplyFilters();
     }
   }
 
   void filterVehicles(String query) {
-    if (query.isEmpty) {
-      state = _allVehicles; // Reset to all vehicles if query is empty
-    } else {
-      state = _allVehicles.where((vehicle) {
-        return (vehicle.rto?.toLowerCase().contains(query.toLowerCase()) ?? false) ||
-               (vehicle.id?.toString().contains(query) ?? false);
+    _currentQuery = query;
+    _reapplyFilters();
+  }
+
+  void applyDropdownFilter(String? filter) {
+    _currentDropdownFilter = filter;
+    _reapplyFilters();
+  }
+
+  void _reapplyFilters() {
+    List<Data> filteredList = _allVehicles;
+
+    if (_currentQuery.isNotEmpty) {
+      filteredList = filteredList.where((vehicle) {
+        return (vehicle.rto?.toLowerCase().contains(_currentQuery.toLowerCase()) ?? false) ||
+               (vehicle.id?.toString().contains(_currentQuery) ?? false);
       }).toList();
     }
+
+    if (_currentDropdownFilter != null) {
+      filteredList = filteredList.where((vehicle) {
+        double? speed = vehicle.speed != null ? double.tryParse(vehicle.speed!) : null;
+        double? stoppageTime = vehicle.stoppageSince != null
+            ? double.tryParse(vehicle.stoppageSince!)
+            : null;
+        double? idleSince = vehicle.idleSince != null
+            ? double.tryParse(vehicle.idleSince!)
+            : null;
+
+        switch (_currentDropdownFilter) {
+          case 'all':
+            return true;
+          case 'speed>0':
+            return speed != null && speed > 0;
+          case 'speed>80':
+            return speed != null && speed > 80;
+          case 'idleSince>10800':
+            return idleSince != null && idleSince > 10800;
+          case 'stoppageTime>10800':
+            return stoppageTime != null && stoppageTime > 10800;
+          default:
+            return true;
+        }
+      }).toList();
+    }
+
+    state = filteredList;
   }
 }
 
@@ -48,4 +92,3 @@ final vehicleSearchProvider =
     StateNotifierProvider<VehicleSearchNotifier, List<Data>>((ref) {
   return VehicleSearchNotifier(ref);
 });
-

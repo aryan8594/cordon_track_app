@@ -1,7 +1,5 @@
-
-
 import 'dart:developer';
-
+import 'package:geolocator/geolocator.dart';
 import 'package:cordon_track_app/business_logic/map_controller_provider.dart';
 import 'package:cordon_track_app/business_logic/navigate_to_search_provider.dart';
 import 'package:cordon_track_app/business_logic/search_query_provider.dart';
@@ -12,13 +10,10 @@ import 'package:cordon_track_app/presentation/widgets/vehicle_info_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'dart:async';
 
 import '../../data/models/live_vehicle_model.dart';
-
-
-
-
 
 class LiveMapPage extends ConsumerStatefulWidget {
   const LiveMapPage({super.key});
@@ -30,11 +25,14 @@ class LiveMapPage extends ConsumerStatefulWidget {
 class _LiveMapPageState extends ConsumerState<LiveMapPage> {
   Timer? _updateTimer;
   // Completer<GoogleMapController> _controller = Completer();
-
+  late MapControllerNotifier mapControllerNotifier;
+  LatLng? _initialLocation;
 
   @override
   void initState() {
     super.initState();
+    initializeMap();
+    mapControllerNotifier = ref.read(mapControllerProvider.notifier);
     _startUpdateTimer();
 
   }
@@ -49,55 +47,73 @@ class _LiveMapPageState extends ConsumerState<LiveMapPage> {
     });
   }
 
-  @override
-  void dispose() {
-    _updateTimer?.cancel();
-    if (!mounted) {
-      ref.read(mapControllerProvider.notifier).disposeController();
+  Future<void> initializeMap() async {
+    if (await requestLocationPermission()) {
+      try {
+        final position = await getCurrentLocation();
+        setState(() {
+          _initialLocation = LatLng(position.latitude, position.longitude);
+        });
+      } catch (e) {
+        // Handle error (e.g., location services off)
+        print("Error fetching location: $e");
+      }
+    } else {
+      // Handle permission denied
+      print("Location permission denied");
     }
+  }
+
+  Future<bool> requestLocationPermission() async {
+    var status = await Permission.locationWhenInUse.status;
+    if (!status.isGranted) {
+      status = await Permission.locationWhenInUse.request();
+    }
+    return status.isGranted;
+  }
+
+  Future<Position> getCurrentLocation() async {
+    return await Geolocator.getCurrentPosition(
+      locationSettings: LocationSettings(
+        accuracy: LocationAccuracy.high,
+        distanceFilter: 10,
+      ),
+    );
+  }
+
+  @override
+  dispose() {
+    _updateTimer?.cancel();
     super.dispose();
   }
 
-
-
   @override
   Widget build(BuildContext context) {
-    final markers = ref.watch(markerProvider); 
+    final markers = ref.watch(markerProvider);
     final filteredVehicles = ref.watch(filteredVehiclesProvider);
     final isSearchVisible = ref.watch(isSearchVisibleProvider);
-    final selectedVehicleId = ref.read(selectedVehicleIdProvider);
+    final mapControllerNotifier = ref.read(mapControllerProvider.notifier);
 
     // final mapController = ref.read(mapControllerProvider);
 
     return Scaffold(
-      appBar: AppBar(leading:Row(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: [
-            SizedBox(width: 10,),
-            Image.asset("lib/presentation/assets/cordon_logo_2.png", height: 25,scale: 10,),
-          ],
-        ),
-        actions: [
-          IconButton(onPressed: (){}, icon: Icon(Icons.notifications, size: 25,)),
-          SizedBox(width: 10,)
-        ],
-        leadingWidth: 120,),
-      body: Stack(
+      body: _initialLocation == null
+      ?Center(child: CircularProgressIndicator()) // Loading state
+      :Stack(
         children: [
           GoogleMap(
             key: const PageStorageKey('MapPage'),
-            zoomControlsEnabled : false,
+            zoomControlsEnabled: false,
             markers: markers,
-            initialCameraPosition: const CameraPosition(
-              target: LatLng(12.976692, 77.576249),
-              zoom: 10,
+            initialCameraPosition: CameraPosition(
+              target: _initialLocation ?? LatLng(12.976692, 77.576249),
+              zoom:12,
             ),
-            onMapCreated: (controller) {
-                controller.setMapStyle(Utils.mapStyles);
+            onMapCreated: (controller) async {
+              controller.setMapStyle(Utils.mapStyles);
 
-                  ref.read(mapControllerProvider.notifier).initializeController(controller);
-                log("controller initalized");
-              
+              await mapControllerNotifier.initializeController(controller);
+              log("controller initalized");
 
               // ref.read(markerProvider.notifier).attachMapController(controller);
 
@@ -108,20 +124,22 @@ class _LiveMapPageState extends ConsumerState<LiveMapPage> {
             rotateGesturesEnabled: false,
           ),
           Positioned(
-            right: 1,
-            child: IconButton(  
+            right: 5,
+            top: 50,
+            child: IconButton(
               icon: Icon(isSearchVisible ? Icons.close : Icons.search),
               onPressed: () {
-                ref.read(isSearchVisibleProvider.notifier).state = !isSearchVisible;
+                ref.read(isSearchVisibleProvider.notifier).state =
+                    !isSearchVisible;
                 if (!isSearchVisible) {
-                  ref.read(searchQueryProvider.notifier).state = ''; 
+                  ref.read(searchQueryProvider.notifier).state = '';
                 }
               },
             ),
           ),
           if (isSearchVisible)
             Positioned(
-              top: 40,
+              top: 100,
               left: 10,
               right: 10,
               child: Column(
@@ -130,7 +148,9 @@ class _LiveMapPageState extends ConsumerState<LiveMapPage> {
                     children: [
                       Expanded(
                         child: TextField(
-                          onChanged: (query) => ref.read(searchQueryProvider.notifier).state = query,
+                          onChanged: (query) => ref
+                              .read(searchQueryProvider.notifier)
+                              .state = query,
                           decoration: const InputDecoration(
                             hintText: 'Search by RTO...',
                             border: OutlineInputBorder(),
@@ -146,7 +166,9 @@ class _LiveMapPageState extends ConsumerState<LiveMapPage> {
                       decoration: BoxDecoration(
                         color: Colors.white.withOpacity(0.95),
                         borderRadius: BorderRadius.circular(5),
-                        boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 4)],
+                        boxShadow: [
+                          BoxShadow(color: Colors.black12, blurRadius: 4)
+                        ],
                       ),
                       child: ListView.builder(
                         itemCount: filteredVehicles.length,
@@ -156,8 +178,9 @@ class _LiveMapPageState extends ConsumerState<LiveMapPage> {
                             title: Text(vehicle.rto ?? 'Unknown RTO'),
                             subtitle: Text('Vehicle ID: ${vehicle.id}'),
                             onTap: () {
-                              navigateToVehicle(ref, vehicle);
-                              ref.read(isSearchVisibleProvider.notifier).state = !isSearchVisible;
+                              navigateToVehicle(ref, vehicle, context);
+                              ref.read(isSearchVisibleProvider.notifier).state =
+                                  !isSearchVisible;
                             },
                           );
                         },
@@ -171,7 +194,6 @@ class _LiveMapPageState extends ConsumerState<LiveMapPage> {
     );
   }
 }
-
 
 class Utils {
   static String mapStyles = '''[
@@ -335,4 +357,3 @@ class Utils {
   }
 ]''';
 }
-

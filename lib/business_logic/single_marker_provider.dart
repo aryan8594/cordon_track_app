@@ -42,7 +42,7 @@ class SingleMarkerNotifier extends StateNotifier<Set<Marker>> {
   // Fetch vehicle data and update markers
   Future<void> updateMarkers(BuildContext context) async {
     try {
-      SingleLiveVehicleModel? vehicles = await SingleLiveVehicleRepository().fetchLiveVehicleData(selectecVehicleID);
+      SingleLiveVehicleModel? vehicles = await SingleLiveVehicleRepository(ref).fetchLiveVehicleData(selectecVehicleID);
 
       if (vehicles != null) {
         Set<Marker> updatedMarkers = await _generateMarkers(context, vehicles, ref);
@@ -192,7 +192,7 @@ class SingleMarkerNotifier extends StateNotifier<Set<Marker>> {
     // if (isDisposed) return;
     for (var vehicle in vehicle.data!) {
   const int steps = 150;
-  const int animationDuration = 8000;
+  const int animationDuration = 5000;
   
   double startLat = oldMarker.position.latitude;
   double startLng = oldMarker.position.longitude;

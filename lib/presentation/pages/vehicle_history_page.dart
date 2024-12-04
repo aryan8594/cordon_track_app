@@ -12,6 +12,8 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:flutter_datetime_picker_plus/flutter_datetime_picker_plus.dart';
 import 'package:board_datetime_picker/board_datetime_picker.dart';
 import 'package:basic_utils/basic_utils.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart'
+    as riverpod; // Use alias
 
 class VehicleHistoryPage extends ConsumerStatefulWidget {
   final String vehicleId;
@@ -27,64 +29,96 @@ class _VehicleHistoryPageState extends ConsumerState<VehicleHistoryPage> {
   DateTime? fromDate;
   DateTime? toDate;
   String selectedRange = 'Today';
+  bool isLoading = false; // Track loading state
+  int timerMultiplier = 1; // Default to 1x speed
+  late MapControllerNotifier mapControllerNotifier;
 
   @override
   void initState() {
     super.initState();
-    // Automatically load today's data when the page opens
+
+    mapControllerNotifier = ref.read(mapControllerProvider.notifier);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      loadPolylinesWithCustomDates();
+      Future.delayed(const Duration(milliseconds: 1000), () async {
+        final today = DateTime.now();
+                fromDate =
+                    DateTime(today.year, today.month, today.day, 0, 0, 0);
+                toDate =
+                    DateTime(today.year, today.month, today.day, 23, 59, 59);
+                selectedRange = 'Today';
+                loadPolylinesWithCustomDates();
+      });
     });
   }
 
-  // Load Polylines and Markers together
   Future<void> loadPolylinesWithCustomDates() async {
-    if (mounted) {}
+    if (mounted) {
+      setState(() {
+        isLoading = true; // Start loading
+      });
 
-    if (fromDate != null && toDate != null) {
-      ref
-          .read(polyLineProvider(widget.vehicleId).notifier)
-          .loadVehicleHistoryPolylineMarkers(
-              widget.vehicleId, fromDate!, toDate!);
+      if (fromDate != null && toDate != null) {
+        await ref
+            .read(polyLineProvider(widget.vehicleId).notifier)
+            .loadVehicleHistoryPolylineMarkers(
+              widget.vehicleId,
+              fromDate!,
+              toDate!,
+            );
+      }
+
+      final polylineState = ref.read(polyLineProvider(widget.vehicleId));
+      if (polylineState.polylineCoordinates.isNotEmpty) {
+        final firstPosition = polylineState.polylineCoordinates.first;
+        ref.read(mapControllerProvider.notifier).animateCamera(
+              CameraUpdate.newLatLng(
+                LatLng(firstPosition.latitude, firstPosition.longitude),
+              ),
+            );
+      }
+
+      Future.delayed(const Duration(seconds: 3), () {
+        setState(() {
+          isLoading = false; // End loading
+        });
+      });
     }
+  }
 
-    setState(() {});
+  void updateMultiplier(int multiplier) {
+    setState(() {
+      timerMultiplier = multiplier;
+    });
+
+    // Update playbackTimerProvider with the new multiplier
+    ref.read(playbackTimerProvider.notifier).setSpeedMultiplier(multiplier);
   }
 
   @override
   void dispose() {
-    if (!mounted) {
-      ref.read(mapControllerProvider.notifier).disposeController();
-    }
+    // ref.read(polyLineProvider(widget.vehicleId).notifier).pausePlayback();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    // Watch the entire PolylineStateModel to rebuild on any state change
     final polylineState = ref.watch(polyLineProvider(widget.vehicleId));
     final polylineNotifier =
         ref.read(polyLineProvider(widget.vehicleId).notifier);
     final playbackTimer = ref.read(playbackTimerProvider.notifier);
 
-    // Combine existing markers with the playback marker (if available)
     final Set<Marker> allMarkers = {
-      ...polylineState.markers, // Add the static markers first
-      if (polylineState.playbackMarker != null)
-        polylineState.playbackMarker!, // Add the playback marker last
+      ...polylineState.markers,
+      if (polylineState.playbackMarker != null) polylineState.playbackMarker!,
     };
-
-    // Log the current index and marker to ensure they are updating
-    log("Rendering map with updated currentIndex: ${polylineState.currentIndex}");
-
-    log("Total polyline coordinates: ${polylineState.polylineCoordinates.length}");
-    log("Playback marker: ${polylineState.playbackMarker?.position}");
 
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
         title: InkWell(
-          onTap: () => showDateRangeSelectionSheet(context),
+          onTap: () {
+            showDateRangeSelectionSheet(context);
+          },
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -100,24 +134,49 @@ class _VehicleHistoryPageState extends ConsumerState<VehicleHistoryPage> {
                   textAlign: TextAlign.start,
                 ),
               ),
+              riverpod.Consumer(
+                builder: (context, ref, _) {
+                  // Get the current state of historyVehicleProvider
+                  final historyData = ref.watch(historyVehicleProvider);
+
+                  if (historyData == null) {
+                    return const Text(
+                      "Loading...",
+                      style: TextStyle(fontSize: 15),
+                      textAlign: TextAlign.end,
+                    );
+                  }
+
+                  // Extract the distance from the history data
+                  final distance = historyData.data?.distance;
+
+                  return Text(
+                    distance != null
+                        ? "Distance Covered: ${distance.toStringAsFixed(2)} km"
+                        : "Distance Covered: No Data",
+                    style: const TextStyle(
+                        fontSize: 15, fontWeight: FontWeight.w500),
+                    textAlign: TextAlign.start,
+                  );
+                },
+              ),
               const Icon(Icons.date_range),
             ],
           ),
         ),
       ),
-      body: Column(
+      body: Stack(
         children: [
-          Expanded(
-            child: Stack(
-              children: [
-                GoogleMap(
+          Column(
+            children: [
+              Expanded(
+                child: GoogleMap(
                   initialCameraPosition: const CameraPosition(
                     target: LatLng(12.976692, 77.576249),
                     zoom: 14.0,
                   ),
-                  onMapCreated: (controller) {
-                    ref
-                        .read(mapControllerProvider.notifier)
+                  onMapCreated: (controller) async {
+                    await mapControllerNotifier
                         .initializeController(controller);
                     controller.setMapStyle(Utils.mapStyles);
                     controller
@@ -129,56 +188,131 @@ class _VehicleHistoryPageState extends ConsumerState<VehicleHistoryPage> {
                   compassEnabled: true,
                   rotateGesturesEnabled: false,
                 ),
-              ],
-            ),
-          ),
-          Container(
-            color: Colors.white70,
-            height: 60,
-            width: double.maxFinite,
-            padding: const EdgeInsets.all(8.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                // Play/Pause Button
-                IconButton(
-                  icon: Icon(
-                      polylineState.isPlaying ? Icons.pause : Icons.play_arrow),
-                  onPressed: () {
-                    polylineNotifier.togglePlayPause();
-                    if (polylineNotifier.isPlaying) {
-                      log("Play button pressed.");
-                      ref
-                          .read(playbackTimerProvider.notifier)
-                          .startPlayback(widget.vehicleId);
-                    } else {
-                      log("Pause button pressed.");
-                      ref.read(playbackTimerProvider.notifier).stopPlayback();
-                    }
-                  },
+              ),
+              Container(
+                color: Colors.white70,
+                height: 60,
+                width: double.maxFinite,
+                padding: const EdgeInsets.all(8.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    IconButton(
+                      icon: Icon(polylineState.isPlaying
+                          ? Icons.pause
+                          : Icons.play_arrow),
+                      onPressed: () {
+                        polylineNotifier.togglePlayPause();
+                        if (polylineNotifier.isPlaying) {
+                          ref
+                              .read(playbackTimerProvider.notifier)
+                              .startPlayback(widget.vehicleId);
+                        } else {
+                          ref
+                              .read(playbackTimerProvider.notifier)
+                              .stopPlayback();
+                        }
+                      },
+                    ),
+                    // Timer Multiplier Dropdown
+                    DropdownButton<int>(
+                      value: timerMultiplier,
+                      items: [1, 2, 3, 5, 10]
+                          .map(
+                            (multiplier) => DropdownMenuItem<int>(
+                              value: multiplier,
+                              child: Text("${multiplier}x"),
+                            ),
+                          )
+                          .toList(),
+                      onChanged: (value) {
+                        if (value != null) {
+                          updateMultiplier(value);
+                        }
+                      },
+                    ),
+                    //Playback Slider
+                    Expanded(
+                      child: Slider(
+                        value: polylineState.currentIndex.toDouble(),
+                        min: 0,
+                        max: polylineState.polylineCoordinates.isNotEmpty
+                            ? (polylineState.polylineCoordinates.length - 1)
+                                .toDouble()
+                            : 0,
+                        onChanged: (value) {
+                          if (value.toInt() >= 0 &&
+                              value.toInt() <
+                                  polylineState.polylineCoordinates.length) {
+                            polylineNotifier.setCurrentIndex(value.toInt());
+                          }
+                        },
+                      ),
+                    ),
+                  ],
                 ),
-
-                // Playback Slider
-                Expanded(
-                  child: Slider(
-                    value: polylineState.currentIndex.toDouble(),
-                    min: 0,
-                    max: polylineState.polylineCoordinates.isNotEmpty
-                        ? (polylineState.polylineCoordinates.length - 1)
-                            .toDouble()
-                        : 0,
-                    onChanged: (value) {
-                      if (value.toInt() >= 0 &&
-                          value.toInt() <
-                              polylineState.polylineCoordinates.length) {
-                        polylineNotifier.setCurrentIndex(value.toInt());
-                      }
-                    },
-                  ),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
+          if (isLoading)
+            Container(
+              color: Colors.black.withOpacity(0.5), // Semi-transparent overlay
+              child: const Center(
+                child: CircularProgressIndicator(
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          Positioned(
+            bottom: 100,
+            left: 10,
+            child: FloatingActionButton(
+              onPressed: () {
+                // final historyData = vehicleHistory;
+                // final historyOdoStart =
+                //     historyData?.data?.odometerStart?.toString() ??
+                //         "No Data Available";
+                // final historyOdoEnd =
+                //     historyData?.data?.odometerEnd?.toString() ??
+                //         "No Data Available";
+                // final historyDistance =
+                //     historyData?.data?.distance?.toString() ??
+                //         "No Data Available";
+                // print("vehicleHistory: ${vehicleHistory}");
+                // print("Odometer Start: ${vehicleHistory?.data?.odometerStart}");
+                // print("Odometer End: ${vehicleHistory?.data?.odometerEnd}");
+                // print("Distance: ${vehicleHistory?.data?.distance}");
+                // showDialog(
+                //     context: context,
+                //     builder: (context) {
+                //       return AlertDialog(
+                //         title: const Icon(
+                //           Icons.message,
+                //           color: Color.fromRGBO(144, 202, 220, 1),
+                //           size: 35.0,
+                //           semanticLabel:
+                //               'Info Window for Vehile History Data for slected Range.',
+                //         ),
+                //         content: Container(
+                //           height: 50,
+                //           child: Column(
+                //             children: [
+                //               Text(
+                //                   'Total Distance covered for the Selected Range: ${historyDistance}'),
+                //             ],
+                //           ),
+                //         ),
+                //         actions: <Widget>[
+                //           TextButton(
+                //               onPressed: () => Navigator.of(context).pop(),
+                //               child: Text('OK')),
+                //         ],
+                //       );
+                //     });
+              },
+              child: const Icon(Icons.info),
+            ),
+          )
         ],
       ),
     );
@@ -275,71 +409,71 @@ class _VehicleHistoryPageState extends ConsumerState<VehicleHistoryPage> {
                 loadPolylinesWithCustomDates();
               },
             ),
-            //LAST 15 DAYS
-            ListTile(
-              title: const Text(
-                'Last 15 Days',
-                style: TextStyle(fontWeight: FontWeight.w500),
-              ),
-              onTap: () {
-                final today = DateTime.now();
-                fromDate = DateTime(today.year, today.month, today.day, 0, 0, 0)
-                    .subtract(const Duration(days: 15));
-                toDate =
-                    DateTime(today.year, today.month, today.day, 23, 59, 59);
-                selectedRange = 'Last 15 Days';
-                Navigator.pop(context);
-                loadPolylinesWithCustomDates();
-              },
-            ),
-            //THIS MONTH
-            ListTile(
-              title: const Text(
-                'This Month',
-                style: TextStyle(fontWeight: FontWeight.w500),
-              ),
-              onTap: () {
-                final today = DateTime.now();
-                fromDate = DateUtil.startOfMonth();
-                toDate = fromDate!.add(const Duration(days: 30));
-                selectedRange = 'This Month';
-                Navigator.pop(context);
-                loadPolylinesWithCustomDates();
-              },
-            ),
-            //LAST MONTH
-            ListTile(
-              title: const Text(
-                'Last Month',
-                style: TextStyle(fontWeight: FontWeight.w500),
-              ),
-              onTap: () {
-                final today = DateTime.now();
-                fromDate =
-                    DateUtil.startOfMonth().subtract(const Duration(days: 30));
-                toDate = fromDate!.add(const Duration(days: 30));
-                selectedRange = 'Last Month';
-                Navigator.pop(context);
-                loadPolylinesWithCustomDates();
-              },
-            ),
-            //LAST 30 DAYS
-            ListTile(
-              title: const Text(
-                'Last 30 Days',
-                style: TextStyle(fontWeight: FontWeight.w500),
-              ),
-              onTap: () {
-                final today = DateTime.now();
-                fromDate = DateTime(today.year, today.month, today.day, 0, 0, 0)
-                    .subtract(const Duration(days: 30));
-                toDate =
-                    DateTime(today.year, today.month, today.day, 23, 59, 59);
-                selectedRange = 'Last 30 Days';
-                Navigator.pop(context);
-                loadPolylinesWithCustomDates();
-              },
-            ),
+            // //LAST 15 DAYS
+            // ListTile(
+            //   title: const Text(
+            //     'Last 15 Days',
+            //     style: TextStyle(fontWeight: FontWeight.w500),
+            //   ),
+            //   onTap: () {
+            //     final today = DateTime.now();
+            //     fromDate = DateTime(today.year, today.month, today.day, 0, 0, 0)
+            //         .subtract(const Duration(days: 15));
+            //     toDate =
+            //         DateTime(today.year, today.month, today.day, 23, 59, 59);
+            //     selectedRange = 'Last 15 Days';
+            //     Navigator.pop(context);
+            //     loadPolylinesWithCustomDates();
+            //   },
+            // ),
+            // //THIS MONTH
+            // ListTile(
+            //   title: const Text(
+            //     'This Month',
+            //     style: TextStyle(fontWeight: FontWeight.w500),
+            //   ),
+            //   onTap: () {
+            //     final today = DateTime.now();
+            //     fromDate = DateUtil.startOfMonth();
+            //     toDate = fromDate!.add(const Duration(days: 30));
+            //     selectedRange = 'This Month';
+            //     Navigator.pop(context);
+            //     loadPolylinesWithCustomDates();
+            //   },
+            // ),
+            // //LAST MONTH
+            // ListTile(
+            //   title: const Text(
+            //     'Last Month',
+            //     style: TextStyle(fontWeight: FontWeight.w500),
+            //   ),
+            //   onTap: () {
+            //     final today = DateTime.now();
+            //     fromDate =
+            //         DateUtil.startOfMonth().subtract(const Duration(days: 30));
+            //     toDate = fromDate!.add(const Duration(days: 30));
+            //     selectedRange = 'Last Month';
+            //     Navigator.pop(context);
+            //     loadPolylinesWithCustomDates();
+            //   },
+            // ),
+            // //LAST 30 DAYS
+            // ListTile(
+            //   title: const Text(
+            //     'Last 30 Days',
+            //     style: TextStyle(fontWeight: FontWeight.w500),
+            //   ),
+            //   onTap: () {
+            //     final today = DateTime.now();
+            //     fromDate = DateTime(today.year, today.month, today.day, 0, 0, 0)
+            //         .subtract(const Duration(days: 30));
+            //     toDate =
+            //         DateTime(today.year, today.month, today.day, 23, 59, 59);
+            //     selectedRange = 'Last 30 Days';
+            //     Navigator.pop(context);
+            //     loadPolylinesWithCustomDates();
+            //   },
+            // ),
             //CUSTOM DATE PICKER
             ListTile(
               title: const Text(
@@ -348,11 +482,12 @@ class _VehicleHistoryPageState extends ConsumerState<VehicleHistoryPage> {
               ),
               onTap: () async {
                 Navigator.pop(context);
-
+                selectedRange = 'Custom Range';
                 final pickedDates = await showBoardDateTimeMultiPicker(
                   context: context,
                   pickerType: DateTimePickerType.datetime,
-                  // minimumDate: DateTime.now().add(const Duration(days: 7)),
+                  minimumDate: DateTime.now().subtract(const Duration(days: 8)),
+                  maximumDate: DateTime.now(),
                   startDate: fromDate,
                   endDate: toDate,
                   options: const BoardDateTimeOptions(

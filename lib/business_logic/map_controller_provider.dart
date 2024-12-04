@@ -11,10 +11,22 @@ class MapControllerNotifier extends StateNotifier<GoogleMapController?> {
     log("Map controller initialized");
   }
 
-  Future<void> animateCamera(LatLng position, double zoom) async {
-    if (state != null) {
-      await state!.animateCamera(CameraUpdate.newLatLngZoom(position, zoom));
-    }
+  Future<void> centerMarkerIfOutOfBounds(LatLng markerPosition) async {
+    if (state == null) return;
+
+    if (mounted) {
+  final visibleRegion = await state!.getVisibleRegion();
+  final isInBounds = visibleRegion.contains(markerPosition);
+  
+  if (!isInBounds) {
+    // Center the camera on the marker
+    await state!.animateCamera(CameraUpdate.newLatLng(markerPosition));
+  }
+}
+  }
+
+  void animateCamera(CameraUpdate cameraUpdate) {
+    state?.animateCamera(cameraUpdate);
   }
 
   Future<ScreenCoordinate?> getScreenCoordinate(LatLng position) async {

@@ -5,7 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// Repository Provider
 final ignitionReportRepositoryProvider = Provider<IgnitonReportRepository>((ref) {
-  return IgnitonReportRepository();
+  return IgnitonReportRepository(ref);
 });
 
 /// StateNotifier for managing API logic

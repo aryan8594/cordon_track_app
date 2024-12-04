@@ -6,7 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// Repository Provider
 final dailyReportRepositoryProvider = Provider<DailyReportRepository>((ref) {
-  return DailyReportRepository();
+  return DailyReportRepository(ref);
 });
 
 /// State Notifier for managing API logic
@@ -38,7 +38,7 @@ class DailyReportNotifier extends StateNotifier<AsyncValue<DailyReportModel>> {
 
 /// Provider for the StateNotifier
 final dailyReportProvider =
-    StateNotifierProvider<DailyReportNotifier, AsyncValue<DailyReportModel>>(
+    StateNotifierProvider.autoDispose<DailyReportNotifier, AsyncValue<DailyReportModel>>(
   (ref) {
     final repository = ref.read(dailyReportRepositoryProvider);
     return DailyReportNotifier(repository);

@@ -6,7 +6,7 @@ import 'package:cordon_track_app/data/models/reports/distance_report_model.dart'
 
 /// Repository Provider
 final distanceReportRepositoryProvider = Provider<DistanceReportRepository>((ref) {
-  return DistanceReportRepository();
+  return DistanceReportRepository(ref);
 });
 
 /// State Notifier for managing API logic

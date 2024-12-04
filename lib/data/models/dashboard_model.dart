@@ -1,3 +1,5 @@
+// ignore_for_file: unnecessary_this
+
 class DashboardModel {
   List<Vehicles>? vehicles;
   bool? status;
@@ -10,16 +12,17 @@ class DashboardModel {
     if (json['vehicles'] != null) {
       vehicles = <Vehicles>[];
       json['vehicles'].forEach((v) {
-        vehicles!.add(new Vehicles.fromJson(v));
+        vehicles!.add(Vehicles.fromJson(v));
       });
     }
     status = json['status'];
     message = json['message'];
-    data = json['data'] != null ? new Data.fromJson(json['data']) : null;
+    data = json['data'] != null ? Data.fromJson(json['data']) : null;
   }
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = new Map<String, dynamic>();
+    // ignore: prefer_collection_literals
+    final Map<String, dynamic> data = Map<String, dynamic>();
     if (this.vehicles != null) {
       data['vehicles'] = this.vehicles!.map((v) => v.toJson()).toList();
     }
@@ -139,7 +142,7 @@ class Vehicles {
   }
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = new Map<String, dynamic>();
+    final Map<String, dynamic> data = <String, dynamic>{};
     data['id'] = this.id;
     data['rto'] = this.rto;
     data['v_type'] = this.vType;
@@ -230,7 +233,7 @@ class Data {
   }
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = new Map<String, dynamic>();
+    final Map<String, dynamic> data = <String, dynamic>{};
     data['vehicle_count'] = this.vehicleCount;
     data['tracking_vehicle_count'] = this.trackingVehicleCount;
     data['vehicle_assign_count'] = this.vehicleAssignCount;

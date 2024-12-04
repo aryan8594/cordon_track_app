@@ -7,10 +7,10 @@ import 'package:cordon_track_app/data/data_providers/reports/distance_report_pro
 import 'package:cordon_track_app/data/data_providers/reports/ignition_report_provider.dart';
 import 'package:cordon_track_app/data/data_providers/reports/travelled_path_provider.dart';
 import 'package:cordon_track_app/data/data_providers/reports/trip_report_provider.dart';
-import 'package:cordon_track_app/presentation/pages/reports/distance%20travelled/distance_report_results.dart';
-import 'package:cordon_track_app/presentation/pages/reports/ignition%20report/ignition_report_results.dart';
-import 'package:cordon_track_app/presentation/pages/reports/travelled%20path/travelled_path_result.dart';
-import 'package:cordon_track_app/presentation/pages/reports/trip%20report/trip_report_results.dart';
+import 'package:cordon_track_app/presentation/pages/reports/distance_travelled/distance_report_results.dart';
+import 'package:cordon_track_app/presentation/pages/reports/ignition_report/ignition_report_results.dart';
+import 'package:cordon_track_app/presentation/pages/reports/travelled_path/travelled_path_result.dart';
+import 'package:cordon_track_app/presentation/pages/reports/trip_report/trip_report_results.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:data_table_2/data_table_2.dart';

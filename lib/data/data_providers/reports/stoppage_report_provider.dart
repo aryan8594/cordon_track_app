@@ -5,7 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// Repository Provider
 final stoppageReportRepositoryProvider = Provider<StoppageReportRepository>((ref) {
-  return StoppageReportRepository();
+  return StoppageReportRepository(ref);
 });
 
 /// State Notifier for managing API logic

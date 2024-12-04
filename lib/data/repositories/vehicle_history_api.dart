@@ -1,10 +1,15 @@
 import 'dart:convert';
+import 'dart:developer';
+import 'package:cordon_track_app/data/data_providers/login_provider.dart';
 import 'package:cordon_track_app/data/models/vehicle_history_model.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 
 class HistoryVehicleRepository{
-    final String token = '8fce96fe1288a2c2b5affeba94201267';
+    final Ref ref;
+    HistoryVehicleRepository(this.ref);
 Future<VehicleHistoryModel?> fetchVehicleHistory( String slectedVehicleID, DateTime fromDate, DateTime toDate) async{
+  String token = ref.watch(tokenProvider.notifier).state;
   try{
     var VehicleHistoryURL = Uri.parse('https://cordontrack.com/api/v1/vehicle/route_playback_new');
     final map = <String, dynamic>{};
@@ -21,7 +26,8 @@ Future<VehicleHistoryModel?> fetchVehicleHistory( String slectedVehicleID, DateT
     );
 
     if (response.statusCode == 200) {
-        print('Data Fetched From API for VehicleSpecificHistory');
+
+        log('Data Fetched From API for VehicleSpecificHistory');
         return VehicleHistoryModel.fromJson(jsonDecode(response.body));
         
     } else {

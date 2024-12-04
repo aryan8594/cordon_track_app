@@ -6,7 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// Repository Provider
 final idleReportRepositoryProvider = Provider<IdleReportRepository>((ref) {
-  return IdleReportRepository();
+  return IdleReportRepository(ref);
 });
 
 /// StateNotifier for managing API logic

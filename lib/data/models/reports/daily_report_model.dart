@@ -1,8 +1,8 @@
 class DailyReportModel {
   List<Data>? data;
   String? draw;
-  int? recordsFiltered;
-  int? recordsTotal;
+  num? recordsFiltered;
+  num? recordsTotal;
   String? id;
   String? type;
   String? rto;
@@ -62,8 +62,8 @@ class Data {
   String? ignitionEnd;
   String? locationStart;
   String? locationEnd;
-  double? odometerStart;
-  double? odometerEnd;
+  num? odometerStart;
+  num? odometerEnd;
   String? avgSpeed;
   String? maxSpeed;
   String? overspeedCount;

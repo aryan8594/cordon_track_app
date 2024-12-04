@@ -29,9 +29,9 @@ class Data {
   String? uName;
   String? dName;
   List<History>? history;
-  double? odometerStart;
-  double? odometerEnd;
-  double? distance;
+  num? odometerStart;
+  num? odometerEnd;
+  num? distance;
 
   Data(
       {this.id,

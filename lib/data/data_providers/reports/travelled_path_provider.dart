@@ -7,7 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// Repository Provider
 final travelledPathRepositoryProvider = Provider<TravelledPathRepository>((ref) {
-  return TravelledPathRepository();
+  return TravelledPathRepository(ref);
 });
 
 /// State Notifier for managing API logic

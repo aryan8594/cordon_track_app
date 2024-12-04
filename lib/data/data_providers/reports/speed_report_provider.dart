@@ -5,7 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// Repository Provider
 final speedReportRepositoryProvider = Provider<SpeedReportRepository>((ref) {
-  return SpeedReportRepository();
+  return SpeedReportRepository(ref);
 });
 
 /// State Notifier for managing API logic

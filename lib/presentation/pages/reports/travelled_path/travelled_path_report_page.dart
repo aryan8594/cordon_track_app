@@ -3,37 +3,35 @@ import 'dart:developer';
 import 'package:board_datetime_picker/board_datetime_picker.dart';
 import 'package:cordon_track_app/business_logic/search_query_provider.dart';
 import 'package:cordon_track_app/business_logic/vehicle_search_provider.dart';
-import 'package:cordon_track_app/data/data_providers/reports/speed_report_provider.dart';
 import 'package:cordon_track_app/data/data_providers/reports/travelled_path_provider.dart';
-import 'package:cordon_track_app/presentation/pages/reports/speed%20report/speed_report_results.dart';
-import 'package:cordon_track_app/presentation/pages/reports/travelled%20path/travelled_path_result.dart';
+import 'package:cordon_track_app/presentation/pages/reports/travelled_path/travelled_path_result.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:data_table_2/data_table_2.dart';
 
-class SpeedReportPage extends ConsumerStatefulWidget {
-  const SpeedReportPage({Key? key}) : super(key: key);
+class TravelledPathPage extends ConsumerStatefulWidget {
+  const TravelledPathPage({Key? key}) : super(key: key);
 
   @override
-  _SpeedReportPageState createState() => _SpeedReportPageState();
+  _TravelledPathPageState createState() => _TravelledPathPageState();
 }
 
-class _SpeedReportPageState extends ConsumerState<SpeedReportPage> {
+class _TravelledPathPageState extends ConsumerState<TravelledPathPage> {
   DateTime today = DateTime.now();
   DateTime fromDate = DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day, 0, 0, 0);
   DateTime toDate = DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day, 23, 59, 59);
-  String? speedLimit;
+  String? timeDifference;
   String selectedRange = 'Today';
   String? vehicleID;
   String? vehicleName;
 
   @override
   Widget build(BuildContext context) {
-    final speedReport = ref.watch(speedReportProvider);
+    final travelledPathState = ref.watch(travelledPathProvider);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Speed Report"),
+        title: const Text("Travelled Path Report"),
         bottom: PreferredSize(
             preferredSize: const Size.fromHeight(10), child: Container()),
       ),
@@ -106,9 +104,9 @@ class _SpeedReportPageState extends ConsumerState<SpeedReportPage> {
                   const SizedBox(height: 8),
                   // Time Difference Input Field
                   DropdownButtonFormField<String>(
-                    value: speedLimit, // Bind the currently selected value
+                    value: timeDifference, // Bind the currently selected value
                     decoration: InputDecoration(
-                      labelText: 'Set Speed Limit',
+                      labelText: 'Time Difference',
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8.0),
                       ),
@@ -119,21 +117,29 @@ class _SpeedReportPageState extends ConsumerState<SpeedReportPage> {
                         child: Text('None'),
                       ),
                       DropdownMenuItem(
+                        value: '1',
+                        child: Text('1 Minute'),
+                      ),
+                      DropdownMenuItem(
+                        value: '15',
+                        child: Text('15 minutes'),
+                      ),
+                      DropdownMenuItem(
                         value: '30',
-                        child: Text('Above 30 km/h'),
+                        child: Text('30 minutes'),
                       ),
                       DropdownMenuItem(
                         value: '60',
-                        child: Text('Above 60 km/h'),
+                        child: Text('1 hour'),
                       ),
                       DropdownMenuItem(
-                        value: '90',
-                        child: Text('Above 90 km/h'),
+                        value: '120',
+                        child: Text('2 hours'),
                       ),
                     ],
                     onChanged: (value) {
                       setState(() {
-                        speedLimit =
+                        timeDifference =
                             value; // Update the timeDifference when a selection is made
                       });
                     },
@@ -170,23 +176,23 @@ class _SpeedReportPageState extends ConsumerState<SpeedReportPage> {
                           toDate != null &&
                           vehicleID != null) {
                         ref
-                            .read(speedReportProvider.notifier)
-                            .fetchSpeedReport(
+                            .read(travelledPathProvider.notifier)
+                            .fetchTravelledPath(
                               id: vehicleID!, // Use selected vehicle ID
                               fromDate: fromDate!,
                               toDate: toDate!,
-                              speed: speedLimit ?? "0",
+                              timeDifference: timeDifference ?? "",
                             );
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                              builder: (context) => SpeedReportResult()),
+                              builder: (context) => TravelledPathResult()),
                         );
                       } else {
                         log("Missing vehicle ID or date range");
                       }
                     },
-                    child: const Text("Fetch Speed Report"),
+                    child: const Text("Fetch Travelled Path"),
                   ),
                 ],
               ),
@@ -330,7 +336,7 @@ class _SpeedReportPageState extends ConsumerState<SpeedReportPage> {
               ),
               onTap: () async {
                 Navigator.pop(context);
-
+                selectedRange = 'Custom DateTime Range';
                 final pickedDates = await showBoardDateTimeMultiPicker(
                   context: context,
                   pickerType: DateTimePickerType.datetime,
@@ -367,11 +373,11 @@ class _SpeedReportPageState extends ConsumerState<SpeedReportPage> {
                 if (pickedDates != null) {
                   fromDate = pickedDates.start;
                   toDate = pickedDates.end;
-                  ref.read(speedReportProvider.notifier).fetchSpeedReport(
+                  ref.read(travelledPathProvider.notifier).fetchTravelledPath(
                         id: vehicleID!,
                         fromDate: fromDate!,
                         toDate: toDate!,
-                        speed: speedLimit!,
+                        timeDifference: timeDifference!,
                       );
                   log("dates selected $pickedDates");
                 }
