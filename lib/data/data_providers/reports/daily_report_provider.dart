@@ -40,6 +40,7 @@ class DailyReportNotifier extends StateNotifier<AsyncValue<DailyReportModel>> {
 final dailyReportProvider =
     StateNotifierProvider.autoDispose<DailyReportNotifier, AsyncValue<DailyReportModel>>(
   (ref) {
+    ref.keepAlive(); // Prevent disposal until explicitly cleared
     final repository = ref.read(dailyReportRepositoryProvider);
     return DailyReportNotifier(repository);
   },

@@ -80,7 +80,7 @@ class PlaybackTimerNotifier extends StateNotifier<PlaybackTimerState> {
     _timer = null;
 
     if (_vehicleId != null) {
-      final polylineNotifier = ref.read(polyLineProvider(_vehicleId!).notifier);
+      // final polylineNotifier = ref.read(polyLineProvider(_vehicleId!).notifier);
       // polylineNotifier.setCurrentIndex(0); // Reset to the start
     }
 
@@ -90,21 +90,63 @@ class PlaybackTimerNotifier extends StateNotifier<PlaybackTimerState> {
   }
 
   /// Updates the playback speed multiplier
-  void setSpeedMultiplier(int multiplier) {
-    log("Setting speed multiplier to $multiplier");
-    state = state.copyWith(speedMultiplier: multiplier);
+/// Updates the playback speed multiplier
+void setSpeedMultiplier(int multiplier) {
+  log("Setting speed multiplier to $multiplier");
+  state = state.copyWith(speedMultiplier: multiplier);
 
-    if (state.isPlaying) {
-      // Restart the timer with the new speed
-      startPlayback(_vehicleId!);
+  if (state.isPlaying) {
+    log("Restarting playback with updated speed multiplier.");
+    stopPlayback(); // Ensure the previous timer is stopped
+    if (_vehicleId != null) {
+      startPlayback(_vehicleId!); // Restart playback with the new speed
     }
   }
+}
+
 
   /// Gets the current speed multiplier
   int get speedMultiplier => state.speedMultiplier;
+
+  /// Seeks forward based on the speed multiplier
+  void seekForward() {
+    if (_vehicleId != null) {
+      final polylineNotifier = ref.read(polyLineProvider(_vehicleId!).notifier);
+      final polylineState = ref.read(polyLineProvider(_vehicleId!));
+      int newIndex = polylineState.currentIndex + state.speedMultiplier;
+
+      // Ensure newIndex doesn't exceed the max length
+      if (newIndex >= polylineState.polylineCoordinates.length) {
+        newIndex = polylineState.polylineCoordinates.length - 1;
+      }
+
+      log("Seeking forward to index: $newIndex");
+      polylineNotifier.setCurrentIndex(newIndex);
+    }
+  }
+
+  /// Seeks backward based on the speed multiplier
+  void seekBackward() {
+    if (_vehicleId != null) {
+      final polylineNotifier = ref.read(polyLineProvider(_vehicleId!).notifier);
+      final polylineState = ref.read(polyLineProvider(_vehicleId!));
+      int newIndex = polylineState.currentIndex - state.speedMultiplier;
+
+      // Ensure newIndex doesn't go below zero
+      if (newIndex <= 0) {
+        newIndex = 0;
+      }
+
+      log("Seeking backward to index: $newIndex");
+      polylineNotifier.setCurrentIndex(newIndex);
+    }
+  }
 }
 
 final playbackTimerProvider =
     StateNotifierProvider.autoDispose<PlaybackTimerNotifier, PlaybackTimerState>(
-  (ref) => PlaybackTimerNotifier(ref),
+  (ref) {
+    ref.keepAlive(); // Prevent disposal until explicitly cleared
+    return PlaybackTimerNotifier(ref);
+  },
 );

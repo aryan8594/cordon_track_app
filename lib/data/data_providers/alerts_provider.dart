@@ -38,6 +38,7 @@ class NewAlertsNotifier extends StateNotifier<AlertsModel?> {
 
 // Riverpod provider for NewAlertsNotifier
 final newAlertsProvider = StateNotifierProvider<NewAlertsNotifier, AlertsModel?>((ref) {
+  ref.keepAlive(); // Prevent disposal until explicitly cleared
   return NewAlertsNotifier(ref);
 });
 

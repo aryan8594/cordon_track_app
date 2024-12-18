@@ -1,10 +1,7 @@
 import 'dart:async';
 
-import 'package:cordon_track_app/business_logic/map_controller_provider.dart';
 import 'package:cordon_track_app/data/data_providers/reports/daily_report_provider.dart';
-import 'package:cordon_track_app/data/models/reports/daily_report_model.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class SingleVehicleReportsPage extends ConsumerStatefulWidget {
@@ -55,7 +52,7 @@ class _SingleVehicleReportsPage
 
   String convertSecondsToHoursMinutes(String secondsString) {
     // Convert the string to an integer
-    int totalSeconds = int.parse(secondsString) ?? 0;
+    int totalSeconds = int.parse(secondsString);
 
     // Create a Duration object
     Duration duration = Duration(seconds: totalSeconds);
@@ -75,7 +72,7 @@ class _SingleVehicleReportsPage
   }
     @override
   Widget build(BuildContext context) {
-    final dailyReport = ref.read(dailyReportProvider);
+    // final dailyReport = ref.read(dailyReportProvider);
     return _buildContent();
   }
 
@@ -89,7 +86,7 @@ class _SingleVehicleReportsPage
 
     return dailyReport.when(
       data: (vehicle) {
-        if (vehicle == null || vehicle.data == null || vehicle.data!.isEmpty) {
+        if (vehicle.data == null || vehicle.data!.isEmpty) {
           return const Center(
               child: Text("No data available for this vehicle."));
         }
@@ -112,7 +109,7 @@ class _SingleVehicleReportsPage
                 const SizedBox(
                   height: 10,
                 ),
-                Text(
+                const Text(
                   "Today Overview",
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
@@ -122,12 +119,12 @@ class _SingleVehicleReportsPage
                     Card(
                       color: Colors.white70,
                       child: Container(
-                        padding: EdgeInsets.all(8),
+                        padding: const EdgeInsets.all(8),
                         height: 80,
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.spaceAround,
                           children: [
-                            Text(
+                            const Text(
                               "Distance",
                               style: TextStyle(fontWeight: FontWeight.w700),
                             ),
@@ -140,7 +137,7 @@ class _SingleVehicleReportsPage
                     Card(
                       color: Colors.white70,
                       child: Container(
-                        padding: EdgeInsets.all(8),
+                        padding: const EdgeInsets.all(8),
                         height: 80,
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -150,7 +147,7 @@ class _SingleVehicleReportsPage
                               style: TextStyle(fontWeight: FontWeight.w700),
                             ),
                             Text(
-                                "${convertSecondsToHoursMinutes(vehicleInfo.runningTime!)}")
+                                convertSecondsToHoursMinutes(vehicleInfo.runningTime!))
                           ],
                         ),
                       ),
@@ -158,24 +155,24 @@ class _SingleVehicleReportsPage
                     Card(
                       color: Colors.white70,
                       child: Container(
-                        padding: EdgeInsets.all(8),
+                        padding: const EdgeInsets.all(8),
                         height: 80,
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.spaceAround,
                           children: [
-                            Text(
+                            const Text(
                               "Stoppage Time",
                               style: TextStyle(fontWeight: FontWeight.w700),
                             ),
                             Text(
-                                "${convertSecondsToHoursMinutes(vehicleInfo.stoppageTime!)}")
+                                convertSecondsToHoursMinutes(vehicleInfo.stoppageTime!))
                           ],
                         ),
                       ),
                     )
                   ],
                 ),
-                SizedBox(
+                const SizedBox(
                   height: 25,
                 ),
                 Row(
@@ -184,12 +181,12 @@ class _SingleVehicleReportsPage
                     Card(
                       color: Colors.white70,
                       child: Container(
-                        padding: EdgeInsets.all(8),
+                        padding: const EdgeInsets.all(8),
                         height: 80,
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.spaceAround,
                           children: [
-                            Text(
+                            const Text(
                               "Average Speed",
                               style: TextStyle(fontWeight: FontWeight.w700),
                             ),
@@ -201,12 +198,12 @@ class _SingleVehicleReportsPage
                     Card(
                       color: Colors.white70,
                       child: Container(
-                        padding: EdgeInsets.all(8),
+                        padding: const EdgeInsets.all(8),
                         height: 80,
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.spaceAround,
                           children: [
-                            Text(
+                            const Text(
                               "Max Speed",
                               style: TextStyle(fontWeight: FontWeight.w700),
                             ),
@@ -218,20 +215,20 @@ class _SingleVehicleReportsPage
                     Card(
                       color: Colors.white70,
                       child: Container(
-                        padding: EdgeInsets.all(8),
+                        padding: const EdgeInsets.all(8),
                         height: 80,
                         child: FittedBox(
                           fit: BoxFit.scaleDown,
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.spaceAround,
                             children: [
-                              Text(
+                              const Text(
                                 "Odometer\nReading",
                                 style: TextStyle(fontWeight: FontWeight.w700),
                               ),
                               Text(
                                 "${(vehicleInfo.odometerEnd!)} kms",
-                                style: TextStyle(fontSize: 13),
+                                style: const TextStyle(fontSize: 13),
                               )
                             ],
                           ),
@@ -250,6 +247,7 @@ class _SingleVehicleReportsPage
     );
   }
 
+  // ignore: unused_element
   Widget _buildInfoCard(String title, String value,
       {bool isSmallText = false}) {
     return Card(

@@ -51,8 +51,8 @@ class VehicleSearchNotifier extends StateNotifier<List<Data>> {
 
     if (_currentQuery.isNotEmpty) {
       filteredList = filteredList.where((vehicle) {
-        return (vehicle.rto?.toLowerCase().contains(_currentQuery.toLowerCase()) ?? false) ||
-               (vehicle.id?.toString().contains(_currentQuery) ?? false);
+        return (vehicle.rto?.toLowerCase().contains(_currentQuery.toLowerCase()) ?? false);
+        // ||(vehicle.id?.toString().contains(_currentQuery) ?? false);
       }).toList();
     }
 
@@ -77,6 +77,10 @@ class VehicleSearchNotifier extends StateNotifier<List<Data>> {
             return idleSince != null && idleSince > 10800;
           case 'stoppageTime>10800':
             return stoppageTime != null && stoppageTime > 10800;
+          case 'panic':
+            return vehicle.panicStatus != null && vehicle.panicStatus == '1';
+          case 'noGPS':
+            return vehicle.gpsStatus != null && vehicle.gpsStatus == '0';
           default:
             return true;
         }

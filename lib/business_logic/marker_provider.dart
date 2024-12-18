@@ -1,5 +1,9 @@
+// ignore_for_file: unused_local_variable, use_build_context_synchronously
+
 import 'dart:async';
-import 'dart:developer';
+import 'dart:developer' as devtools; // Alias for developer log
+import 'dart:math' as math; // For math operations like log()
+
 import 'package:cordon_track_app/business_logic/map_controller_provider.dart';
 import 'package:cordon_track_app/data/data_providers/single_live_vehicle_provider.dart';
 import 'package:cordon_track_app/data/repositories/live_vehicle_api.dart';
@@ -9,6 +13,11 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:cordon_track_app/data/models/live_vehicle_model.dart';
 
 import '../presentation/widgets/vehicle_info_sheet.dart';
+
+final initialCameraPositionProvider =
+    FutureProvider<CameraPosition>((ref) async {
+  return ref.read(markerProvider.notifier).getInitialCameraPosition();
+});
 
 final markerProvider =
     StateNotifierProvider<MarkerNotifier, Set<Marker>>((ref) {
@@ -22,8 +31,8 @@ final markerProvider =
 
 class MarkerNotifier extends StateNotifier<Set<Marker>> {
   final Ref ref;
-  MarkerNotifier(this.ref) : super({}) {}
-  Map<String, BitmapDescriptor> _iconCache =
+  MarkerNotifier(this.ref) : super({});
+  final Map<String, BitmapDescriptor> _iconCache =
       {}; // Icon cache for better performance
   bool isDisposed = false;
   // Completer<GoogleMapController> _controller = Completer();
@@ -33,6 +42,21 @@ class MarkerNotifier extends StateNotifier<Set<Marker>> {
 //   isDisposed = true;
 //   super.dispose();
 // }
+
+  String convertSecondsToHoursMinutes(String secondsString) {
+    // Convert the string to an integer
+    int totalSeconds = int.tryParse(secondsString) ?? 0;
+
+    // Create a Duration object
+    Duration duration = Duration(seconds: totalSeconds);
+
+    // Extract hours and minutes
+    int hours = duration.inHours;
+    int minutes = duration.inMinutes.remainder(60);
+
+    // Return formatted string
+    return '${hours}h ${minutes}m';
+  }
 
   // Fetch vehicle data and update markers
   Future<void> updateMarkers(BuildContext context) async {
@@ -46,7 +70,7 @@ class MarkerNotifier extends StateNotifier<Set<Marker>> {
         state = updatedMarkers; // Update the state with new markers
       }
     } catch (e) {
-      print("Error fetching vehicle data: $e");
+      devtools.log("Error fetching vehicle data: $e");
     }
   }
 
@@ -83,7 +107,11 @@ class MarkerNotifier extends StateNotifier<Set<Marker>> {
             infoWindow: InfoWindow(
               anchor: const Offset(0.5, 0.5),
               title: vehicle.rto ?? 'Unknown RTO',
-              snippet: 'Speed: ${vehicle.speed ?? 'N/A'} km/h',
+              snippet: vehicle.speed != "0"
+                  ? 'Speed: ${vehicle.speed ?? 'N/A'} km/h'
+                  : vehicle.stoppageSince == "0"
+                      ? 'Idle Time: ${convertSecondsToHoursMinutes(vehicle.idleSince ?? '0')} '
+                      : 'Stoppage Time: ${convertSecondsToHoursMinutes(vehicle.stoppageSince ?? '0')} ',
             ),
             rotation: rotation,
             onTap: () async {
@@ -94,7 +122,7 @@ class MarkerNotifier extends StateNotifier<Set<Marker>> {
 
               // final controller = ref.read(mapControllerProvider);
 
-              // if (controller != null 
+              // if (controller != null
               // // && ref.read(selectedVehicleIdProvider.notifier).state == vehicle.id
               //         ) {
               //           log("animating zoom camera function");
@@ -119,19 +147,19 @@ class MarkerNotifier extends StateNotifier<Set<Marker>> {
             // }
 
             if (mounted) {
-  Future.delayed(const Duration(milliseconds: 2000), () async {
-    try {
-      final controller = ref.read(mapControllerProvider);
-      if (controller != null) {
-        log("animating camera to vehicle from delayed");
-        await controller
-            .animateCamera(CameraUpdate.newLatLng(newPosition));
-      }
-    } catch (e) {
-      log('Error animating camera: $e');
-    }
-  });
-}
+              Future.delayed(const Duration(milliseconds: 2000), () async {
+                try {
+                  final controller = ref.read(mapControllerProvider);
+                  if (controller != null) {
+                    devtools.log("animating camera to vehicle from delayed");
+                    await controller
+                        .animateCamera(CameraUpdate.newLatLng(newPosition));
+                  }
+                } catch (e) {
+                  devtools.log('Error animating camera: $e');
+                }
+              });
+            }
           }
         });
       }
@@ -160,14 +188,19 @@ class MarkerNotifier extends StateNotifier<Set<Marker>> {
 
     // Determine the asset path for the custom icon
     if (stoppageSince != null && stoppageSince > 10800) {
-      assetPath = vehicle.vType == 'car'
+      assetPath = vehicle.vType == 'car' ||
+              vehicle.vType == null ||
+              vehicle.vType == 'Unknown' ||
+              vehicle.vType == '' ||
+              vehicle.vType == 'bus'
           ? 'lib/presentation/assets/cab_black.png'
           : 'lib/presentation/assets/truck_black.png';
     } else if (stoppageSince != null && stoppageSince < 10800) {
       if (vehicle.vType == 'car' ||
           vehicle.vType == null ||
           vehicle.vType == 'Unknown' ||
-          vehicle.vType == '') {
+          vehicle.vType == '' ||
+          vehicle.vType == 'bus') {
         if (speed == null || speed == 0) {
           assetPath = 'lib/presentation/assets/cab_yellow.png';
         } else if (speed > 60) {
@@ -235,7 +268,11 @@ class MarkerNotifier extends StateNotifier<Set<Marker>> {
         infoWindowParam: InfoWindow(
           anchor: const Offset(0.5, 0.5),
           title: vehicle.rto ?? 'Unknown RTO',
-          snippet: 'Speed: ${vehicle.speed ?? 'N/A'} km/h',
+          snippet: vehicle.speed != "0"
+              ? 'Speed: ${vehicle.speed ?? 'N/A'} km/h'
+              : vehicle.stoppageSince == "0"
+                  ? 'Idle Time: ${convertSecondsToHoursMinutes(vehicle.idleSince ?? '0')} '
+                  : 'Stoppage Time: ${convertSecondsToHoursMinutes(vehicle.stoppageSince ?? '0')} ',
           onTap: () async {
             // final GoogleMapController controller = await ref.read(mapControllerProvider).future;
             // controller.animateCamera(CameraUpdate.newLatLngZoom(newPosition, 15));
@@ -292,5 +329,54 @@ class MarkerNotifier extends StateNotifier<Set<Marker>> {
       showVehicleTopModalSheet(context, vehicleId, ref);
       showVehicleInfoModal(context, vehicleId, ref);
     }
+  }
+
+  Future<CameraPosition> getInitialCameraPosition() async {
+    // Wait until markers are populated
+    while (state.isEmpty) {
+      await Future.delayed(const Duration(milliseconds: 100));
+    }
+
+    // Initialize bounds
+    double minLat = double.infinity, maxLat = -double.infinity;
+    double minLng = double.infinity, maxLng = -double.infinity;
+
+    // Calculate bounds by iterating through all marker positions
+    for (var marker in state) {
+      minLat = math.min(minLat, marker.position.latitude);
+      maxLat = math.max(maxLat, marker.position.latitude);
+      minLng = math.min(minLng, marker.position.longitude);
+      maxLng = math.max(maxLng, marker.position.longitude);
+    }
+
+    // Center of the bounds
+    LatLng center = LatLng((minLat + maxLat) / 2, (minLng + maxLng) / 2);
+
+    // Calculate zoom level dynamically
+    double zoomLevel = _getBoundsZoomLevel(minLat, maxLat, minLng, maxLng);
+
+    return CameraPosition(target: center, zoom: zoomLevel);
+  }
+
+  double _getBoundsZoomLevel(
+      double minLat, double maxLat, double minLng, double maxLng) {
+    const double worldWidth = 256; // Base tile size for Google Maps
+    const double zoomScale = 20; // Adjust based on screen dimensions
+
+    // Earth's circumference in degrees
+    const double earthCircumference = 360.0;
+
+    // Calculate lat/lng deltas
+    double latDiff = (maxLat - minLat).abs();
+    double lngDiff = (maxLng - minLng).abs();
+
+    // Find maximum delta
+    double maxDelta = math.max(latDiff, lngDiff);
+
+    // Compute scale to fit the bounds
+    double scale = earthCircumference / maxDelta;
+
+    // Convert scale to zoom level
+    return (math.log(scale) / math.ln2).clamp(0, 20).toDouble();
   }
 }

@@ -1,27 +1,25 @@
+// ignore_for_file: unused_local_variable
+
 import 'dart:developer';
 // import 'dart:math';
 
 import 'package:cordon_track_app/business_logic/map_controller_provider.dart';
 import 'package:cordon_track_app/business_logic/playback_timer_provider.dart';
 import 'package:cordon_track_app/business_logic/poly_line_provider.dart';
-import 'package:cordon_track_app/data/data_providers/vehicle_history_provider.dart';
-import 'package:cordon_track_app/data/models/vehicle_history_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:flutter_datetime_picker_plus/flutter_datetime_picker_plus.dart';
 import 'package:board_datetime_picker/board_datetime_picker.dart';
-import 'package:basic_utils/basic_utils.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart'
     as riverpod; // Use alias
 
 class VehicleHistoryPage extends ConsumerStatefulWidget {
   final String vehicleId;
 
-  const VehicleHistoryPage({required this.vehicleId, Key? key})
-      : super(key: key);
+  const VehicleHistoryPage({required this.vehicleId, super.key});
 
   @override
+  // ignore: library_private_types_in_public_api
   _VehicleHistoryPageState createState() => _VehicleHistoryPageState();
 }
 
@@ -41,12 +39,10 @@ class _VehicleHistoryPageState extends ConsumerState<VehicleHistoryPage> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Future.delayed(const Duration(milliseconds: 1000), () async {
         final today = DateTime.now();
-                fromDate =
-                    DateTime(today.year, today.month, today.day, 0, 0, 0);
-                toDate =
-                    DateTime(today.year, today.month, today.day, 23, 59, 59);
-                selectedRange = 'Today';
-                loadPolylinesWithCustomDates();
+        fromDate = DateTime(today.year, today.month, today.day, 0, 0, 0);
+        toDate = DateTime(today.year, today.month, today.day, 23, 59, 59);
+        selectedRange = 'Today';
+        loadPolylinesWithCustomDates();
       });
     });
   }
@@ -173,11 +169,12 @@ class _VehicleHistoryPageState extends ConsumerState<VehicleHistoryPage> {
                 child: GoogleMap(
                   initialCameraPosition: const CameraPosition(
                     target: LatLng(12.976692, 77.576249),
-                    zoom: 14.0,
+                    zoom: 11,
                   ),
                   onMapCreated: (controller) async {
                     await mapControllerNotifier
                         .initializeController(controller);
+                    // ignore: deprecated_member_use
                     controller.setMapStyle(Utils.mapStyles);
                     controller
                         .showMarkerInfoWindow(const MarkerId('playbackMarker'));
@@ -190,68 +187,106 @@ class _VehicleHistoryPageState extends ConsumerState<VehicleHistoryPage> {
                 ),
               ),
               Container(
-                color: Colors.white70,
-                height: 60,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(20),
+                  color: Colors.white70,
+                ),
                 width: double.maxFinite,
                 padding: const EdgeInsets.all(8.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                child: Column(
                   children: [
-                    IconButton(
-                      icon: Icon(polylineState.isPlaying
-                          ? Icons.pause
-                          : Icons.play_arrow),
-                      onPressed: () {
-                        polylineNotifier.togglePlayPause();
-                        if (polylineNotifier.isPlaying) {
-                          ref
-                              .read(playbackTimerProvider.notifier)
-                              .startPlayback(widget.vehicleId);
-                        } else {
-                          ref
-                              .read(playbackTimerProvider.notifier)
-                              .stopPlayback();
-                        }
-                      },
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        // Timer Multiplier Dropdown
+                        DropdownButton<int>(
+                          value: timerMultiplier,
+                          items: [1, 2, 3, 5, 10]
+                              .map(
+                                (multiplier) => DropdownMenuItem<int>(
+                                  value: multiplier,
+                                  child: Text("${multiplier}x"),
+                                ),
+                              )
+                              .toList(),
+                          onChanged: (value) {
+                            if (value != null) {
+                              updateMultiplier(value);
+                            }
+                          },
+                        ),
+
+                        // Playback Slider
+                        Expanded(
+                          child: Slider(
+                            activeColor: Colors.blueAccent,
+                            value: polylineState.currentIndex.toDouble(),
+                            min: 0,
+                            max: polylineState.polylineCoordinates.isNotEmpty
+                                ? (polylineState.polylineCoordinates.length - 1)
+                                    .toDouble()
+                                : 0,
+                            onChanged: (value) {
+                              if (value.toInt() >= 0 &&
+                                  value.toInt() <
+                                      polylineState
+                                          .polylineCoordinates.length) {
+                                polylineNotifier.setCurrentIndex(value.toInt());
+                              }
+                            },
+                          ),
+                        ),
+                      ],
                     ),
-                    // Timer Multiplier Dropdown
-                    DropdownButton<int>(
-                      value: timerMultiplier,
-                      items: [1, 2, 3, 5, 10]
-                          .map(
-                            (multiplier) => DropdownMenuItem<int>(
-                              value: multiplier,
-                              child: Text("${multiplier}x"),
-                            ),
-                          )
-                          .toList(),
-                      onChanged: (value) {
-                        if (value != null) {
-                          updateMultiplier(value);
-                        }
-                      },
-                    ),
-                    //Playback Slider
-                    Expanded(
-                      child: Slider(
-                        value: polylineState.currentIndex.toDouble(),
-                        min: 0,
-                        max: polylineState.polylineCoordinates.isNotEmpty
-                            ? (polylineState.polylineCoordinates.length - 1)
-                                .toDouble()
-                            : 0,
-                        onChanged: (value) {
-                          if (value.toInt() >= 0 &&
-                              value.toInt() <
-                                  polylineState.polylineCoordinates.length) {
-                            polylineNotifier.setCurrentIndex(value.toInt());
-                          }
-                        },
-                      ),
-                    ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        // Backward Seek Button
+                        IconButton(
+                          icon: const Icon(Icons.fast_rewind),
+                          iconSize: 30,
+                          onPressed: () {
+                            ref
+                                .read(playbackTimerProvider.notifier)
+                                .seekBackward();
+                          },
+                        ),
+
+                        // Play/Pause Button
+                        IconButton(
+                          iconSize: 30,
+                          icon: Icon(polylineState.isPlaying
+                              ? Icons.pause
+                              : Icons.play_arrow),
+                          onPressed: () {
+                            polylineNotifier.togglePlayPause();
+                            if (polylineNotifier.isPlaying) {
+                              ref
+                                  .read(playbackTimerProvider.notifier)
+                                  .startPlayback(widget.vehicleId);
+                            } else {
+                              ref
+                                  .read(playbackTimerProvider.notifier)
+                                  .stopPlayback();
+                            }
+                          },
+                        ),
+
+                        // Forward Seek Button
+                        IconButton(
+                          icon: const Icon(Icons.fast_forward),
+                          iconSize: 30,
+                          onPressed: () {
+                            ref
+                                .read(playbackTimerProvider.notifier)
+                                .seekForward();
+                          },
+                        ),
+                      ],
+                    )
                   ],
                 ),
-              ),
+              )
             ],
           ),
           if (isLoading)
@@ -263,56 +298,56 @@ class _VehicleHistoryPageState extends ConsumerState<VehicleHistoryPage> {
                 ),
               ),
             ),
-          Positioned(
-            bottom: 100,
-            left: 10,
-            child: FloatingActionButton(
-              onPressed: () {
-                // final historyData = vehicleHistory;
-                // final historyOdoStart =
-                //     historyData?.data?.odometerStart?.toString() ??
-                //         "No Data Available";
-                // final historyOdoEnd =
-                //     historyData?.data?.odometerEnd?.toString() ??
-                //         "No Data Available";
-                // final historyDistance =
-                //     historyData?.data?.distance?.toString() ??
-                //         "No Data Available";
-                // print("vehicleHistory: ${vehicleHistory}");
-                // print("Odometer Start: ${vehicleHistory?.data?.odometerStart}");
-                // print("Odometer End: ${vehicleHistory?.data?.odometerEnd}");
-                // print("Distance: ${vehicleHistory?.data?.distance}");
-                // showDialog(
-                //     context: context,
-                //     builder: (context) {
-                //       return AlertDialog(
-                //         title: const Icon(
-                //           Icons.message,
-                //           color: Color.fromRGBO(144, 202, 220, 1),
-                //           size: 35.0,
-                //           semanticLabel:
-                //               'Info Window for Vehile History Data for slected Range.',
-                //         ),
-                //         content: Container(
-                //           height: 50,
-                //           child: Column(
-                //             children: [
-                //               Text(
-                //                   'Total Distance covered for the Selected Range: ${historyDistance}'),
-                //             ],
-                //           ),
-                //         ),
-                //         actions: <Widget>[
-                //           TextButton(
-                //               onPressed: () => Navigator.of(context).pop(),
-                //               child: Text('OK')),
-                //         ],
-                //       );
-                //     });
-              },
-              child: const Icon(Icons.info),
-            ),
-          )
+          // Positioned(
+          //   bottom: 100,
+          //   left: 10,
+          //   child: FloatingActionButton(
+          //     onPressed: () {
+          //       // final historyData = vehicleHistory;
+          //       // final historyOdoStart =
+          //       //     historyData?.data?.odometerStart?.toString() ??
+          //       //         "No Data Available";
+          //       // final historyOdoEnd =
+          //       //     historyData?.data?.odometerEnd?.toString() ??
+          //       //         "No Data Available";
+          //       // final historyDistance =
+          //       //     historyData?.data?.distance?.toString() ??
+          //       //         "No Data Available";
+          //       // print("vehicleHistory: ${vehicleHistory}");
+          //       // print("Odometer Start: ${vehicleHistory?.data?.odometerStart}");
+          //       // print("Odometer End: ${vehicleHistory?.data?.odometerEnd}");
+          //       // print("Distance: ${vehicleHistory?.data?.distance}");
+          //       // showDialog(
+          //       //     context: context,
+          //       //     builder: (context) {
+          //       //       return AlertDialog(
+          //       //         title: const Icon(
+          //       //           Icons.message,
+          //       //           color: Color.fromRGBO(144, 202, 220, 1),
+          //       //           size: 35.0,
+          //       //           semanticLabel:
+          //       //               'Info Window for Vehile History Data for slected Range.',
+          //       //         ),
+          //       //         content: Container(
+          //       //           height: 50,
+          //       //           child: Column(
+          //       //             children: [
+          //       //               Text(
+          //       //                   'Total Distance covered for the Selected Range: ${historyDistance}'),
+          //       //             ],
+          //       //           ),
+          //       //         ),
+          //       //         actions: <Widget>[
+          //       //           TextButton(
+          //       //               onPressed: () => Navigator.of(context).pop(),
+          //       //               child: Text('OK')),
+          //       //         ],
+          //       //       );
+          //       //     });
+          //     },
+          //     child: const Icon(Icons.info),
+          //   ),
+          // )
         ],
       ),
     );
@@ -386,7 +421,7 @@ class _VehicleHistoryPageState extends ConsumerState<VehicleHistoryPage> {
                 final today = DateTime.now();
                 fromDate =
                     DateUtil.startOfWeek().subtract(const Duration(days: 7));
-                toDate = fromDate!.add(Duration(days: 7));
+                toDate = fromDate!.add(const Duration(days: 7));
                 selectedRange = 'Last Week';
                 Navigator.pop(context);
                 loadPolylinesWithCustomDates();

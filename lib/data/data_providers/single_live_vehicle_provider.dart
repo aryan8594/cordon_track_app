@@ -21,10 +21,9 @@ final singleLiveVehicleProvider = StreamProvider.autoDispose.family<SingleLiveVe
       //should not be here but in marker_provider.dart
       ref.read(selectedVehicleIdProvider.notifier).state = selectedVehicleID;
       controller.add(data);
+    // ignore: empty_catches
     } catch (error) {
-      if (controller == null) {
-        controller.addError(error);
-      }
+      
     }
   }
 

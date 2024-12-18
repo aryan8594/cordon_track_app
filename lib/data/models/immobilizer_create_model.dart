@@ -1,12 +1,14 @@
-class ImmobalizerCreateModel {
+// ignore_for_file: unnecessary_new, prefer_collection_literals, unnecessary_this
+
+class ImmobilizerCreateModel {
   bool? status;
   String? message;
   int? data;
   Command? command;
 
-  ImmobalizerCreateModel({this.status, this.message, this.data, this.command});
+  ImmobilizerCreateModel({this.status, this.message, this.data, this.command});
 
-  ImmobalizerCreateModel.fromJson(Map<String, dynamic> json) {
+  ImmobilizerCreateModel.fromJson(Map<String, dynamic> json) {
     status = json['status'];
     message = json['message'];
     data = json['data'];

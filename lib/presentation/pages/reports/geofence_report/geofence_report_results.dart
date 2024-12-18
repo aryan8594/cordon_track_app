@@ -17,20 +17,23 @@ class _GeofenceReportResultState extends ConsumerState<GeofenceReportResult> {
   @override
   Widget build(BuildContext context) {
     final geofenceReport = ref.watch(geofenceReportProvider);
-    String formatSecondsToTime(int seconds) {
-  int hours = seconds ~/ 3600; // Calculate the hours
-  int minutes = (seconds % 3600) ~/ 60; // Calculate the remaining minutes
-  return "${hours} hr ${minutes} min";
-}
+//     String formatSecondsToTime(int seconds) {
+//   int hours = seconds ~/ 3600; // Calculate the hours
+//   int minutes = (seconds % 3600) ~/ 60; // Calculate the remaining minutes
+//   return "${hours} hr ${minutes} min";
+// }
 
 
     return Scaffold(
-      appBar: AppBar(title: Text("Geofence Report: ${widget.type}")),
+      //colorScheme.secondary,
+      appBar: AppBar(
+        //colorScheme.primary,
+        title: Text("Geofence Report: ${widget.type}")),
       body: Padding(
         padding: const EdgeInsets.all(5),
         child: geofenceReport.when(
           data: (data) {
-            if (data == null || data.data!.history!.isEmpty) {
+            if (data.data!.history!.isEmpty) {
               return const Center(
                 child: Text("No data available."),
               );
@@ -70,10 +73,10 @@ class _GeofenceReportResultState extends ConsumerState<GeofenceReportResult> {
                     (item) => DataRow(
                       
                       cells: [
-                        DataCell(Text('${item.rto}')),
-                        DataCell(Text('${item.inDatetime}')),
-                        DataCell(Text('${item.outDatetime}')),
-                        DataCell(Text('${item.geoName}')),
+                        DataCell(Text(item.rto  ?? "Not Available")),
+                        DataCell(Text(item.inDatetime  ?? "Not Available")),
+                        DataCell(Text('${item.outDatetime  ?? "Not Available"} ')),
+                        DataCell(Text(item.geoName  ?? "Not Available")),
                         DataCell(Text('${item.duration ?? 0} ')),
                         DataCell(Text('${(item.distance?.toDouble())} km')),
                       ],

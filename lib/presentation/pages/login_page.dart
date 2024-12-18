@@ -1,7 +1,6 @@
 import 'dart:developer';
 
 import 'package:cordon_track_app/data/data_providers/login_provider.dart';
-import 'package:cordon_track_app/data/models/login_model.dart';
 import 'package:flutter/material.dart';
 import 'package:passwordfield/passwordfield.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -50,7 +49,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                Spacer(),
+                const Spacer(),
                 Image.asset(
                   "lib/presentation/assets/cordon_logo_3.png",
                   scale: 16,
@@ -126,6 +125,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                               mainAxisAlignment: MainAxisAlignment.end,
                               children: [
                                 Checkbox(
+                                  activeColor: Colors.black,
                                   value: rememberMe,
                                   onChanged: (bool? value) {
                                     setState(() {
@@ -179,21 +179,22 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                                   }
                                 }
                               } catch (e) {
-                                print(e);
+                                log('4e');
                               }
                             },
                             child: Container(
                               width: 280,
                               decoration: BoxDecoration(
-                                  color: Color.fromRGBO(144, 202, 220, 1),
+                                  color: const Color.fromRGBO(144, 202, 220, 1),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: Color.fromRGBO(82, 135, 132, 1)
-                                          .withOpacity(0.25),
+                                      color:
+                                          const Color.fromRGBO(82, 135, 132, 1)
+                                              .withOpacity(0.25),
                                       spreadRadius:
                                           9, // Increased spread radius
                                       blurRadius: 15,
-                                      offset: Offset(0, 5),
+                                      offset: const Offset(0, 5),
                                     ),
                                   ],
                                   borderRadius: BorderRadius.circular(40)),
@@ -247,7 +248,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                                           TextButton(
                                               onPressed: () =>
                                                   Navigator.of(context).pop(),
-                                              child: Text('OK')),
+                                              child: const Text('OK')),
                                         ],
                                       );
                                     });

@@ -1,3 +1,5 @@
+// ignore_for_file: unnecessary_string_interpolations
+
 import 'dart:convert';
 import 'dart:developer';
 import 'package:cordon_track_app/data/data_providers/login_provider.dart';
@@ -11,14 +13,14 @@ class HistoryVehicleRepository{
 Future<VehicleHistoryModel?> fetchVehicleHistory( String slectedVehicleID, DateTime fromDate, DateTime toDate) async{
   String token = ref.watch(tokenProvider.notifier).state;
   try{
-    var VehicleHistoryURL = Uri.parse('https://cordontrack.com/api/v1/vehicle/route_playback_new');
+    var vehicleHistoryURL = Uri.parse('https://cordontrack.com/api/v1/vehicle/route_playback_new');
     final map = <String, dynamic>{};
     map['id'] = '$slectedVehicleID';
     map['from_date'] = '$fromDate';
     map['to_date'] = '$toDate';
 
     var response = await http.post(
-      VehicleHistoryURL,
+      vehicleHistoryURL,
       headers: {
       'Token': '$token',},
       body: map,
@@ -31,12 +33,12 @@ Future<VehicleHistoryModel?> fetchVehicleHistory( String slectedVehicleID, DateT
         return VehicleHistoryModel.fromJson(jsonDecode(response.body));
         
     } else {
-      print('Failed to load VehicleSpecificHistory');
+      log('Failed to load VehicleSpecificHistory');
       return null;
     }
 
   }catch (e) {
-      print("Exception caught at history API: $e");
+      log("Exception caught at history API: $e");
       return null;
   }
   }

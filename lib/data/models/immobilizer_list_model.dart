@@ -1,13 +1,15 @@
-class ImmobalizerListModel {
+// ignore_for_file: unnecessary_new, prefer_collection_literals, unnecessary_this
+
+class ImmobilizerListModel {
   List<Data>? data;
   String? draw;
   String? recordsFiltered;
   String? recordsTotal;
 
-  ImmobalizerListModel(
+  ImmobilizerListModel(
       {this.data, this.draw, this.recordsFiltered, this.recordsTotal});
 
-  ImmobalizerListModel.fromJson(Map<String, dynamic> json) {
+  ImmobilizerListModel.fromJson(Map<String, dynamic> json) {
     if (json['data'] != null) {
       data = <Data>[];
       json['data'].forEach((v) {

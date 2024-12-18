@@ -3,20 +3,20 @@
 import 'dart:convert';
 import 'dart:developer';
 import 'package:cordon_track_app/data/data_providers/login_provider.dart';
-import 'package:cordon_track_app/data/models/immobaizer_create_model.dart';
+import 'package:cordon_track_app/data/models/immobilizer_create_model.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 
-class ImmobalizerCreateRepository{
+class ImmobilizerCreateRepository{
     final Ref ref;
-    ImmobalizerCreateRepository(this.ref);
+    ImmobilizerCreateRepository(this.ref);
     DateTime scheduledTime = DateTime.now(); 
     String scheduleName = ""; 
     String vehicleCount = "1"; 
-Future<ImmobalizerCreateModel?> fetchImmobalizerCreate( String vehicleArray, String event ) async{
+Future<ImmobilizerCreateModel?> fetchImmobilizerCreate( String vehicleArray, String event ) async{
   String token = ref.watch(tokenProvider.notifier).state;
   try{
-    var immobalizerCreateURL = Uri.parse('https://cordontrack.com/api/v1/immobilize/create');
+    var immobilizerCreateURL = Uri.parse('https://cordontrack.com/api/v1/immobilize/create');
     final map = <String, dynamic>{};
     map['schedule_time'] = '${scheduledTime.toIso8601String()}';
     map['schedule_name'] = '$scheduleName';
@@ -25,7 +25,7 @@ Future<ImmobalizerCreateModel?> fetchImmobalizerCreate( String vehicleArray, Str
     map['event'] = '$event';
 
     var response = await http.post(
-      immobalizerCreateURL,
+      immobilizerCreateURL,
       headers: {
       'token': '$token',},
       body: map,
@@ -34,17 +34,17 @@ Future<ImmobalizerCreateModel?> fetchImmobalizerCreate( String vehicleArray, Str
 
     if (response.statusCode == 200) {
 
-        log('Data sent to Immobalizer create');
+        log('Data sent to Immobilizer create');
         log(response.body);
-        return ImmobalizerCreateModel.fromJson(jsonDecode(response.body));
+        return ImmobilizerCreateModel.fromJson(jsonDecode(response.body));
         
     } else {
-      log('Failed to ImmobalizerCreate API');
+      log('Failed to ImmobilizerCreate API');
       return null;
     }
 
   }catch (e) {
-      log("Exception caught at ImmobalizerCreate API: $e");
+      log("Exception caught at ImmobilizerCreate API: $e");
       return null;
   }
   }

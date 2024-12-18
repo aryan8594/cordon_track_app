@@ -10,7 +10,9 @@ class AlertsPage extends ConsumerWidget {
     final alertsModel = ref.watch(newAlertsProvider);
 
     return Scaffold(
+      // //colorScheme.secondary,
       appBar: AppBar(
+        // //colorScheme.primary,
         title: const Text("Alerts"),
       ),
       body: alertsModel == null ||
@@ -34,30 +36,35 @@ class AlertsPage extends ConsumerWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          "Alert ID: ${alert.id}",
+                          "RTO Number: ${alert.rto ?? "Not Available"}",
                           style: const TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 16,
                           ),
                         ),
                         const SizedBox(height: 8),
-                        Text("Vehicle ID: ${alert.vehicleId ?? 'N/A'}"),
+                        // Text("Vehicle ID: ${alert.vehicleId ?? 'N/A'}"),
                         const SizedBox(height: 4),
                         Text("Datetime: ${alert.datetime ?? 'N/A'}"),
                         const SizedBox(height: 4),
                         Text("Alert Type: ${alert.alertType ?? 'N/A'}"),
                         const SizedBox(height: 4),
-                        SizedBox(
-                          width: double.infinity,
-                          child: SingleChildScrollView(
-                            scrollDirection: Axis.vertical,
-                            child: SelectableText(
-                              "Message: ${alert.message ?? 'N/A'}",
-                              style: const TextStyle(color: Colors.black54),
-                              textAlign: TextAlign.start,
-                            ),
-                          ),
-                        ),
+                        SelectableText("Message: ${alert.message ?? 'N/A'}"),
+                        const SizedBox(height: 4),
+
+                        const SizedBox(height: 4),
+                        // SelectableText("Message: ${alert.email ?? 'N/A'}"),
+                        // SizedBox(
+                        //   width: double.infinity,
+                        //   child: SingleChildScrollView(
+                        //     scrollDirection: Axis.vertical,
+                        //     child: SelectableText(
+                        //       "Message: ${alert.message ?? 'N/A'}",
+                        //       style: const TextStyle(color: Colors.black54),
+                        //       textAlign: TextAlign.start,
+                        //     ),
+                        //   ),
+                        // ),
                       ],
                     ),
                   ),

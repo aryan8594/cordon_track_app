@@ -1,12 +1,11 @@
+// ignore_for_file: unused_element, unnecessary_brace_in_string_interps
+
 import 'package:cordon_track_app/data/data_providers/reports/daily_report_provider.dart';
-import 'package:cordon_track_app/data/data_providers/reports/distance_report_provider.dart';
-import 'package:cordon_track_app/data/data_providers/reports/travelled_path_provider.dart';
-import 'package:data_table_2/data_table_2.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class DailyReportResult extends ConsumerStatefulWidget {
-  const DailyReportResult({Key? key}) : super(key: key);
+  const DailyReportResult({super.key});
 
   @override
   ConsumerState<DailyReportResult> createState() => _DailyReportResultState();
@@ -47,12 +46,15 @@ class _DailyReportResultState extends ConsumerState<DailyReportResult> {
 }
 
     return Scaffold(
-      appBar: AppBar(title: const Text("Daily Report")),
+      // //colorScheme.secondary,
+      appBar: AppBar(
+        // //colorScheme.primary,
+        title: const Text("Daily Report")),
       body: Padding(
         padding: const EdgeInsets.all(5),
         child: dailyReport.when(
           data: (data) {
-            if (data == null || data.data!.isEmpty) {
+            if (data.data!.isEmpty) {
               return const Center(
                 child: Text("No data available."),
               );
@@ -70,36 +72,36 @@ class _DailyReportResultState extends ConsumerState<DailyReportResult> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            "Vehicle Number: ${item.rto}",
+                            "Vehicle Number: ${item.rto ?? "Not Available"}",
                             style: const TextStyle(
                                 fontWeight: FontWeight.bold, fontSize: 18),
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            "Report Date: ${item.date}",
-                            style: TextStyle(fontWeight: FontWeight.bold),
+                            "Report Date: ${item.date ?? "Not Available"}",
+                            style: const TextStyle(fontWeight: FontWeight.bold),
                           ),
                           const SizedBox(height: 8),
-                          Text("Ignition Start: ${item.ignitionStart}"),
+                          Text("Ignition Start: ${item.ignitionStart ?? "Not Available"}"),
                           const SizedBox(height: 8),
-                          Text("Ignition End: ${item.ignitionEnd}"),
+                          Text("Ignition End: ${item.ignitionEnd ?? "Not Available"}"),
                           const SizedBox(height: 8),
-                          Text("Location Start: ${item.locationStart}"),
+                          Text("Location Start: ${item.locationStart  ?? "Not Available"}"),
                           const SizedBox(height: 8),
-                          Text("Location End: ${item.locationEnd}"),
+                          Text("Location End: ${item.locationEnd ?? "Not Available"}"),
                           const SizedBox(height: 8),
                           Row(
                             children: [
                               Text(
-                                "Odometer range : ${item.odometerStart}kms - ${item.odometerEnd}kms",
-                                style: TextStyle(fontWeight: FontWeight.bold),
+                                "Odometer range : ${item.odometerStart  ?? "Not Available"}kms - ${item.odometerEnd  ?? "Not Available"}kms",
+                                style: const TextStyle(fontWeight: FontWeight.bold),
                               ),
                             ],
                           ),
                           const SizedBox(height: 8),
-                          Text("Average Speed: ${item.avgSpeed} km/h"),
+                          Text("Average Speed: ${item.avgSpeed  ?? "Not Available"} km/h"),
                           const SizedBox(height: 8),
-                          Text("Maximum Speed: ${item.maxSpeed} km/h"),
+                          Text("Maximum Speed: ${item.maxSpeed  ?? "Not Available"} km/h"),
                           const SizedBox(height: 8),
                           Text("Total Run Time: ${convertSecondsToHoursMinutes(item.runningTime ?? "0")}"),
                           const SizedBox(height: 8),

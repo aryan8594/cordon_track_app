@@ -22,13 +22,13 @@ class LoginStateNotifier extends StateNotifier<AsyncValue<LoginModel?>> {
 
       if (logres.statusCode == 200) {
         var jsonResponse = jsonDecode(logres.body);
-        log(logres.body);
+        // log(logres.body);
 
         if (jsonResponse['status'] == true) {
           LoginModel model = LoginModel.fromJson(jsonResponse);
           savedToken = model.token!; // Save token globally or to token provider
           ref.read(tokenProvider.notifier).state = savedToken; // Update tokenProvider
-          log("Auth Token : ${model.token}");
+          // log("Auth Token : ${model.token}");
           state = AsyncValue.data(model); // Set success state
         } else {
           log("Login failed: ${jsonResponse['message']}");

@@ -1,7 +1,7 @@
 import 'dart:io';
 
 import 'package:cordon_track_app/data/data_providers/login_provider.dart';
-import 'package:cordon_track_app/presentation/pages/immobalizer_list_page.dart';
+import 'package:cordon_track_app/presentation/pages/immobilizer_list_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -16,6 +16,7 @@ class MorePage extends ConsumerWidget {
     final loginState = ref.watch(loginProvider);
 
     return Scaffold(
+      // //colorScheme.secondary,
       body: loginState.when(
         data: (loginModel) {
           if (loginModel!.data == null) {
@@ -45,25 +46,25 @@ class MorePage extends ConsumerWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              '${loginModel.data?.name}', // Use name from loginModel
+                              loginModel.data?.name ?? "Not Available", // Use name from loginModel
                               style: const TextStyle(
                                   fontSize: 22, fontWeight: FontWeight.bold),
                             ),
                             const SizedBox(height: 5),
                             Text(
-                              'Username: ${loginModel.data?.username}', // Use empId from loginModel
+                              'Username: ${loginModel.data?.username ?? "Not Available"}', // Use empId from loginModel
                               style: TextStyle(
                                   fontSize: 16, color: Colors.grey[700]),
                             ),
                             const SizedBox(height: 5),
                             Text(
-                              'Email: ${loginModel.data?.email}', // Use empId from loginModel
+                              'Email: ${loginModel.data?.email ?? "Not Available"}', // Use empId from loginModel
                               style: TextStyle(
                                   fontSize: 16, color: Colors.grey[700]),
                             ),
                             const SizedBox(height: 5),
                             Text(
-                              'City: ${loginModel.data?.city}', // Use empId from loginModel
+                              'City: ${loginModel.data?.city ?? "Not Available"}', // Use empId from loginModel
                               style: TextStyle(
                                   fontSize: 16, color: Colors.grey[700]),
                             ),
@@ -81,12 +82,12 @@ class MorePage extends ConsumerWidget {
                 // Profile Options List
                 ProfileOption(
                   icon: Icons.power_settings_new_rounded,
-                  text: 'Immobalizer',
+                  text: 'Immobilizer',
                   onTap: () {
                     // Handle Trip Details tap
                     Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => const ImmobalizerListPage()));
+                MaterialPageRoute(builder: (context) => const ImmobilizerListPage()));
                   },
                 ),
                 // Add other ProfileOption widgets here...

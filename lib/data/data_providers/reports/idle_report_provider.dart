@@ -1,7 +1,6 @@
 import 'dart:developer';
 import 'package:cordon_track_app/data/models/reports/idle_report_model.dart';
 import 'package:cordon_track_app/data/repositories/reports/idle_report_api.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// Repository Provider

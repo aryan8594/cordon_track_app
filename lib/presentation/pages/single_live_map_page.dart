@@ -1,21 +1,16 @@
 import 'dart:async';
-import 'dart:developer';
-import 'dart:ffi';
 import 'package:cordon_track_app/data/data_providers/reports/daily_report_provider.dart';
-import 'package:cordon_track_app/data/models/reports/daily_report_model.dart';
 import 'package:intl/intl.dart';
 import 'package:backdrop/backdrop.dart';
 import 'package:cordon_track_app/business_logic/map_controller_provider.dart';
 import 'package:cordon_track_app/business_logic/poly_line_provider.dart';
 import 'package:cordon_track_app/business_logic/single_marker_provider.dart';
 import 'package:cordon_track_app/data/data_providers/single_live_vehicle_provider.dart';
-import 'package:cordon_track_app/data/models/single_live_vehicle_model.dart';
 
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:top_modal_sheet/top_modal_sheet.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class SingleVehicleMapPage extends ConsumerStatefulWidget {
@@ -77,7 +72,7 @@ class _SingleVehicleMapPageState extends ConsumerState<SingleVehicleMapPage> {
       if (mounted) {
         // Update from and to dates for the refresh
         DateTime now = DateTime.now();
-        DateTime fromDatePoly = now.subtract(const Duration(minutes: 30));
+        // DateTime fromDatePoly = now.subtract(const Duration(minutes: 30));
         fromDate =
             DateTime(now.year, now.month, now.day, 0, 0, 0); // Start of the day
         DateTime toDate = DateTime(
@@ -87,9 +82,10 @@ class _SingleVehicleMapPageState extends ConsumerState<SingleVehicleMapPage> {
         Future.microtask(() {
           loadPolylinesWithCustomDates();
 
-          if (mounted) {
+          if (context.mounted) {
             ref
                 .read(singleMarkerProvider(widget.vehicleId).notifier)
+                // ignore: use_build_context_synchronously
                 .updateMarkers(context);
 
             ref.read(dailyReportProvider.notifier).fetchDailyReport(
@@ -106,20 +102,18 @@ class _SingleVehicleMapPageState extends ConsumerState<SingleVehicleMapPage> {
   }
 
   void loadPolylinesWithCustomDates() {
+    // ignore: unnecessary_null_comparison
     if (fromDate != null && toDate != null) {
       ref
           .read(polyLineProvider(widget.vehicleId).notifier)
           .loadVehicleHistoryPolylineMarkers(
-              widget.vehicleId, fromDatePoly!, toDate!);
+              widget.vehicleId, fromDatePoly, toDate);
     }
   }
 
   @override
   void dispose() {
     _updateTimer?.cancel();
-    if (!mounted) {
-      ref.read(mapControllerProvider.notifier).disposeController();
-    }
     super.dispose();
   }
 
@@ -159,6 +153,7 @@ class _SingleVehicleMapPageState extends ConsumerState<SingleVehicleMapPage> {
               rotateGesturesEnabled: false,
               onMapCreated: (controller) async {
                 await mapControllerNotifier.initializeController(controller);
+                // ignore: deprecated_member_use
                 controller.setMapStyle(Utils.mapStyles);
               },
               markers: markers,
@@ -170,9 +165,10 @@ class _SingleVehicleMapPageState extends ConsumerState<SingleVehicleMapPage> {
                 ),
                 zoom: 14.0,
               ),
+              myLocationEnabled: true,
             );
           }
-          return Divider(
+          return const Divider(
             color: Colors.amber,
           );
         },
@@ -231,7 +227,7 @@ class _SingleVehicleMapPageState extends ConsumerState<SingleVehicleMapPage> {
 
   String convertSecondsToHoursMinutes(String secondsString) {
     // Convert the string to an integer
-    int totalSeconds = int.parse(secondsString) ?? 0;
+    int totalSeconds = int.parse(secondsString);
 
     // Create a Duration object
     Duration duration = Duration(seconds: totalSeconds);
@@ -303,15 +299,33 @@ class _SingleVehicleMapPageState extends ConsumerState<SingleVehicleMapPage> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    speed == 0
-                        ? const Icon(
-                            Icons.adjust_rounded,
-                            color: Colors.yellow,
-                          )
-                        : const Icon(
-                            Icons.adjust_rounded,
-                            color: Colors.green,
-                          ),
+                    Column(
+                      children: [
+                        speed == 0
+                            ? const Icon(
+                                Icons.adjust_rounded,
+                                color: Colors.yellow,
+                              )
+                            : const Icon(
+                                Icons.adjust_rounded,
+                                color: Colors.green,
+                              ),
+                        vehicleInfo.panicStatus == "0"
+                            ? const SizedBox()
+                            : const Icon(
+                                Icons.report_problem_rounded,
+                                color: Colors.redAccent,
+                                size: 25,
+                              ),
+                        vehicleInfo.gpsStatus == '1'
+                            ? const SizedBox()
+                            : const Icon(
+                                Icons.gps_off_rounded,
+                                size: 25,
+                                color: Colors.redAccent,
+                              ),
+                      ],
+                    ),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -403,7 +417,7 @@ class _SingleVehicleMapPageState extends ConsumerState<SingleVehicleMapPage> {
                                 children: [
                                   Text(
                                     "${vehicleInfo.externalBatteryVoltage} v",
-                                    style: TextStyle(fontSize: 15),
+                                    style: const TextStyle(fontSize: 15),
                                   ),
                                   externalBatteryVoltage! < 9
                                       ? const Icon(
@@ -419,7 +433,7 @@ class _SingleVehicleMapPageState extends ConsumerState<SingleVehicleMapPage> {
                                 ],
                               ),
                         vehicleInfo.acStatus == null
-                            ? SizedBox()
+                            ? const SizedBox()
                             : Row(
                                 children: [
                                   vehicleInfo.acStatus == "0"
@@ -440,8 +454,8 @@ class _SingleVehicleMapPageState extends ConsumerState<SingleVehicleMapPage> {
                                               color: Colors.green,
                                             )
                                           : vehicleInfo.acStatus == null
-                                              ? SizedBox()
-                                              : SizedBox()
+                                              ? const SizedBox()
+                                              : const SizedBox()
                                 ],
                               ),
                       ],
@@ -456,7 +470,7 @@ class _SingleVehicleMapPageState extends ConsumerState<SingleVehicleMapPage> {
                   children: [
                     Flexible(
                         child: Text(
-                      "${vehicleInfo.rto ?? "Not Available"}",
+                      vehicleInfo.rto ?? "Not Available",
                       overflow: TextOverflow.clip,
                       softWrap: true,
                       maxLines: 5,
@@ -476,17 +490,17 @@ class _SingleVehicleMapPageState extends ConsumerState<SingleVehicleMapPage> {
                               //   style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
                               // ),
                               Icon(
-                                gsmSingnalStrength! > 18
+                                gsmSingnalStrength > 18
                                     ? Icons.signal_cellular_alt_rounded
-                                    : gsmSingnalStrength! > 8
+                                    : gsmSingnalStrength > 8
                                         ? Icons
                                             .signal_cellular_alt_2_bar_rounded
                                         : Icons
                                             .signal_cellular_alt_1_bar_rounded,
                                 size: 25,
-                                color: gsmSingnalStrength! > 18
+                                color: gsmSingnalStrength > 18
                                     ? Colors.green
-                                    : gsmSingnalStrength! > 8
+                                    : gsmSingnalStrength > 8
                                         ? Colors.yellow
                                         : Colors.red,
                               )
@@ -505,7 +519,7 @@ class _SingleVehicleMapPageState extends ConsumerState<SingleVehicleMapPage> {
   }
 
   Widget _buildFrontLayer() {
-    final vehicleData = ref.watch(singleLiveVehicleProvider(widget.vehicleId));
+    // final vehicleData = ref.watch(singleLiveVehicleProvider(widget.vehicleId));
     final dailyReport = ref.watch(dailyReportProvider);
 
     String calculateDifference(double value1, double value2) {
@@ -516,7 +530,7 @@ class _SingleVehicleMapPageState extends ConsumerState<SingleVehicleMapPage> {
 
     return dailyReport.when(
       data: (vehicle) {
-        if (vehicle == null || vehicle.data == null || vehicle.data!.isEmpty) {
+        if (vehicle.data == null || vehicle.data!.isEmpty) {
           return const Center(
               child: Text("No data available for this vehicle."));
         }
@@ -553,18 +567,11 @@ class _SingleVehicleMapPageState extends ConsumerState<SingleVehicleMapPage> {
                             size: 30,
                           ),
                           onPressed: () {
-                            if (savedLat != null && savedLong != null) {
-                              final locationUrl =
-                                  "https://www.google.com/maps/search/?api=1&query=${savedLat},${savedLong}";
-                              Share.share(
-                                  "Check out this location: $locationUrl for the vehicle with number, ${vehicleInfo.rto}.\nSent through the Cordon Track App!");
-                            } else {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                    content: Text("Location unavailable")),
-                              );
-                            }
-                          },
+                            final locationUrl =
+                                "https://www.google.com/maps/search/?api=1&query=$savedLat,$savedLong";
+                            Share.share(
+                                "Check out this location: $locationUrl for the vehicle with number, ${vehicleInfo.rto}.\nSent through the Cordon Track App!");
+                                                    },
                         ),
                         const Text(
                           "Share\nLocation",
@@ -577,25 +584,17 @@ class _SingleVehicleMapPageState extends ConsumerState<SingleVehicleMapPage> {
                       mainAxisAlignment: MainAxisAlignment.start,
                       children: [
                         IconButton(
-                          icon: Icon(
+                          icon: const Icon(
                             Icons.directions,
                             color: Colors.lightBlueAccent,
                             size: 30,
                           ),
                           onPressed: () {
-                            if (savedLat != null && savedLong != null) {
-                              final googleMapsUrl =
-                                  "google.navigation:q=${savedLat},${savedLong}&mode=d";
-                              launchUrl(Uri.parse(googleMapsUrl),
-                                  mode: LaunchMode.externalApplication);
-                            } else {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                    content: Text(
-                                        "Unable to navigate. Location unavailable")),
-                              );
-                            }
-                          },
+                            final googleMapsUrl =
+                                "google.navigation:q=$savedLat,$savedLong&mode=d";
+                            launchUrl(Uri.parse(googleMapsUrl),
+                                mode: LaunchMode.externalApplication);
+                                                    },
                         ),
                         const Text("Navigate"),
                       ],
@@ -615,12 +614,12 @@ class _SingleVehicleMapPageState extends ConsumerState<SingleVehicleMapPage> {
                     Card(
                       color: Colors.white70,
                       child: Container(
-                        padding: EdgeInsets.all(8),
+                        padding: const EdgeInsets.all(8),
                         height: 80,
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.spaceAround,
                           children: [
-                            Text(
+                            const Text(
                               "Distance",
                               style: TextStyle(fontWeight: FontWeight.w700),
                             ),
@@ -633,7 +632,7 @@ class _SingleVehicleMapPageState extends ConsumerState<SingleVehicleMapPage> {
                     Card(
                       color: Colors.white70,
                       child: Container(
-                        padding: EdgeInsets.all(8),
+                        padding: const EdgeInsets.all(8),
                         height: 80,
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -651,24 +650,24 @@ class _SingleVehicleMapPageState extends ConsumerState<SingleVehicleMapPage> {
                     Card(
                       color: Colors.white70,
                       child: Container(
-                        padding: EdgeInsets.all(8),
+                        padding: const EdgeInsets.all(8),
                         height: 80,
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.spaceAround,
                           children: [
-                            Text(
+                            const Text(
                               "Stoppage Time",
                               style: TextStyle(fontWeight: FontWeight.w700),
                             ),
                             Text(
-                                "${convertSecondsToHoursMinutes(vehicleInfo.stoppageTime ?? "0")}")
+                                convertSecondsToHoursMinutes(vehicleInfo.stoppageTime ?? "0"))
                           ],
                         ),
                       ),
                     )
                   ],
                 ),
-                SizedBox(
+                const SizedBox(
                   height: 25,
                 ),
                 Row(
@@ -677,12 +676,12 @@ class _SingleVehicleMapPageState extends ConsumerState<SingleVehicleMapPage> {
                     Card(
                       color: Colors.white70,
                       child: Container(
-                        padding: EdgeInsets.all(8),
+                        padding: const EdgeInsets.all(8),
                         height: 80,
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.spaceAround,
                           children: [
-                            Text(
+                            const Text(
                               "Average Speed",
                               style: TextStyle(fontWeight: FontWeight.w700),
                             ),
@@ -694,12 +693,12 @@ class _SingleVehicleMapPageState extends ConsumerState<SingleVehicleMapPage> {
                     Card(
                       color: Colors.white70,
                       child: Container(
-                        padding: EdgeInsets.all(8),
+                        padding: const EdgeInsets.all(8),
                         height: 80,
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.spaceAround,
                           children: [
-                            Text(
+                            const Text(
                               "Max Speed",
                               style: TextStyle(fontWeight: FontWeight.w700),
                             ),
@@ -711,20 +710,20 @@ class _SingleVehicleMapPageState extends ConsumerState<SingleVehicleMapPage> {
                     Card(
                       color: Colors.white70,
                       child: Container(
-                        padding: EdgeInsets.all(8),
+                        padding: const EdgeInsets.all(8),
                         height: 80,
                         child: FittedBox(
                           fit: BoxFit.scaleDown,
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.spaceAround,
                             children: [
-                              Text(
+                              const Text(
                                 "Odometer\nReading",
                                 style: TextStyle(fontWeight: FontWeight.w700),
                               ),
                               Text(
                                 "${(vehicleInfo.odometerEnd ?? "0")} kms",
-                                style: TextStyle(fontSize: 13),
+                                style: const TextStyle(fontSize: 13),
                               )
                             ],
                           ),

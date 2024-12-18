@@ -1,18 +1,16 @@
+// ignore_for_file: unnecessary_null_comparison, file_names, library_private_types_in_public_api
+
 import 'dart:developer';
 
 import 'package:board_datetime_picker/board_datetime_picker.dart';
 import 'package:cordon_track_app/business_logic/search_query_provider.dart';
-import 'package:cordon_track_app/business_logic/vehicle_search_provider.dart';
 import 'package:cordon_track_app/data/data_providers/reports/distance_report_provider.dart';
-import 'package:cordon_track_app/data/data_providers/reports/travelled_path_provider.dart';
 import 'package:cordon_track_app/presentation/pages/reports/distance_travelled/distance_report_results.dart';
-import 'package:cordon_track_app/presentation/pages/reports/travelled_path/travelled_path_result.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:data_table_2/data_table_2.dart';
 
 class DistanceReportPage extends ConsumerStatefulWidget {
-  const DistanceReportPage({Key? key}) : super(key: key);
+  const DistanceReportPage({super.key});
 
   @override
   _DistanceReportPageState createState() => _DistanceReportPageState();
@@ -28,10 +26,12 @@ class _DistanceReportPageState extends ConsumerState<DistanceReportPage> {
 
   @override
   Widget build(BuildContext context) {
-    final distanceReprtState = ref.watch(distanceReportProvider);
+    // final distanceReprtState = ref.watch(distanceReportProvider);
 
     return Scaffold(
+       //colorScheme.secondary,
       appBar: AppBar(
+         //colorScheme.primary,
         title: const Text("Distance Report"),
         bottom: PreferredSize(
             preferredSize: const Size.fromHeight(10), child: Container()),
@@ -71,7 +71,7 @@ class _DistanceReportPageState extends ConsumerState<DistanceReportPage> {
                       decoration: BoxDecoration(
                         color: Colors.white.withOpacity(0.95),
                         borderRadius: BorderRadius.circular(5),
-                        boxShadow: [
+                        boxShadow: const [
                           BoxShadow(color: Colors.black12, blurRadius: 4),
                         ],
                       ),
@@ -106,7 +106,7 @@ class _DistanceReportPageState extends ConsumerState<DistanceReportPage> {
                               index - 1]; // Adjust index for the "ALL" option
                           return ListTile(
                             title: Text(vehicle.rto ?? 'Unknown RTO'),
-                            subtitle: Text('Vehicle ID: ${vehicle.id}'),
+                            // subtitle: Text('Vehicle ID: ${vehicle.id}'),
                             onTap: () {
                               vehicleName = vehicle.rto ?? '';
                               textController.text =
@@ -154,19 +154,19 @@ class _DistanceReportPageState extends ConsumerState<DistanceReportPage> {
                             .read(distanceReportProvider.notifier)
                             .fetchDistanceReport(
                               id: vehicleID!, // Use selected vehicle ID
-                              fromDate: fromDate!,
-                              toDate: toDate!,
+                              fromDate: fromDate,
+                              toDate: toDate,
                             );
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                              builder: (context) => DistanceReportResult()),
+                              builder: (context) => const DistanceReportResult()),
                         );
                       } else {
                         log("Missing vehicle ID or date range");
                       }
                     },
-                    child: const Text("Fetch Distance Report"),
+                    child: const Text("Fetch Distance Report", style: TextStyle(color: Colors.black),),
                   ),
                 ],
               ),
@@ -265,7 +265,7 @@ class _DistanceReportPageState extends ConsumerState<DistanceReportPage> {
                 setState(() {
                   fromDate =
                       DateUtil.startOfWeek().subtract(const Duration(days: 7));
-                  toDate = fromDate!.add(const Duration(days: 7));
+                  toDate = fromDate.add(const Duration(days: 7));
                   selectedRange = 'Last Week';
                 });
                 Navigator.pop(context);
@@ -349,8 +349,8 @@ class _DistanceReportPageState extends ConsumerState<DistanceReportPage> {
                   toDate = pickedDates.end;
                   ref.read(distanceReportProvider.notifier).fetchDistanceReport(
                         id: vehicleID!,
-                        fromDate: fromDate!,
-                        toDate: toDate!,
+                        fromDate: fromDate,
+                        toDate: toDate,
                       );
                   log("dates selected $pickedDates");
                 }

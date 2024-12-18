@@ -18,7 +18,7 @@ class LiveVehicleRepository  {
 
     String token = ref.watch(tokenProvider.notifier).state;
     final response = await http.get(Uri.parse(apiUrl), headers: {
-      'Token': '$token',
+      'Token': token,
     });
 
     if (response.statusCode == 200) {
@@ -28,7 +28,7 @@ class LiveVehicleRepository  {
       return liveVehicle.data;
       
     } else {
-      print('Failed to load vehicles');
+      log('Failed to load vehicles');
       return null;
     }
   }

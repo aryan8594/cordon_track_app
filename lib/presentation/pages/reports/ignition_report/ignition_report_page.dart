@@ -1,20 +1,16 @@
+// ignore_for_file: library_private_types_in_public_api
+
 import 'dart:developer';
 
 import 'package:board_datetime_picker/board_datetime_picker.dart';
 import 'package:cordon_track_app/business_logic/search_query_provider.dart';
-import 'package:cordon_track_app/business_logic/vehicle_search_provider.dart';
-import 'package:cordon_track_app/data/data_providers/reports/distance_report_provider.dart';
 import 'package:cordon_track_app/data/data_providers/reports/ignition_report_provider.dart';
-import 'package:cordon_track_app/data/data_providers/reports/travelled_path_provider.dart';
-import 'package:cordon_track_app/presentation/pages/reports/distance_travelled/distance_report_results.dart';
 import 'package:cordon_track_app/presentation/pages/reports/ignition_report/ignition_report_results.dart';
-import 'package:cordon_track_app/presentation/pages/reports/travelled_path/travelled_path_result.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:data_table_2/data_table_2.dart';
 
 class IgnitionReportPage extends ConsumerStatefulWidget {
-  const IgnitionReportPage({Key? key}) : super(key: key);
+  const IgnitionReportPage({super.key});
 
   @override
   _IgnitionReportPageState createState() => _IgnitionReportPageState();
@@ -31,10 +27,12 @@ class _IgnitionReportPageState extends ConsumerState<IgnitionReportPage> {
 
   @override
   Widget build(BuildContext context) {
-    final ignitonReport = ref.watch(ignitionReportProvider);
+    // final ignitonReport = ref.watch(ignitionReportProvider);
 
     return Scaffold(
+      //colorScheme.secondary,
       appBar: AppBar(
+        //colorScheme.primary,
         title: const Text("Ignition Report"),
         bottom: PreferredSize(
             preferredSize: const Size.fromHeight(10), child: Container()),
@@ -74,7 +72,7 @@ class _IgnitionReportPageState extends ConsumerState<IgnitionReportPage> {
                       decoration: BoxDecoration(
                         color: Colors.white.withOpacity(0.95),
                         borderRadius: BorderRadius.circular(5),
-                        boxShadow: [
+                        boxShadow: const [
                           BoxShadow(color: Colors.black12, blurRadius: 4),
                         ],
                       ),
@@ -88,7 +86,7 @@ class _IgnitionReportPageState extends ConsumerState<IgnitionReportPage> {
                                 final vehicle = filteredVehicles[index];
                                 return ListTile(
                                   title: Text(vehicle.rto ?? 'Unknown RTO'),
-                                  subtitle: Text('Vehicle ID: ${vehicle.id}'),
+                                  // subtitle: Text('Vehicle ID: ${vehicle.id}'),
                                   onTap: () {
                                     // Populate the search text field with the RTO
                                     vehicleName = vehicle.rto ?? '';
@@ -133,26 +131,24 @@ class _IgnitionReportPageState extends ConsumerState<IgnitionReportPage> {
                   // Fetch Data Button
                   ElevatedButton(
                     onPressed: () async {
-                      if (fromDate != null &&
-                          toDate != null &&
-                          vehicleID != null) {
+                      if (vehicleID != null) {
                         ref
                             .read(ignitionReportProvider.notifier)
                             .fetchIgnitionReport(
                               id: vehicleID!, // Use selected vehicle ID
-                              fromDate: fromDate!,
-                              toDate: toDate!,
+                              fromDate: fromDate,
+                              toDate: toDate,
                             );
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                              builder: (context) => IgnitionReportResult()),
+                              builder: (context) => const IgnitionReportResult()),
                         );
                       } else {
                         log("Missing vehicle ID or date range");
                       }
                     },
-                    child: const Text("Fetch Ignition Report"),
+                    child: const Text("Fetch Ignition Report", style: TextStyle(color: Colors.black),),
                   ),
                 ],
               ),
@@ -251,7 +247,7 @@ class _IgnitionReportPageState extends ConsumerState<IgnitionReportPage> {
                 setState(() {
                   fromDate =
                       DateUtil.startOfWeek().subtract(const Duration(days: 7));
-                  toDate = fromDate!.add(const Duration(days: 7));
+                  toDate = fromDate.add(const Duration(days: 7));
                   selectedRange = 'Last Week';
                 });
                 Navigator.pop(context);
@@ -335,8 +331,8 @@ class _IgnitionReportPageState extends ConsumerState<IgnitionReportPage> {
                   toDate = pickedDates.end;
                   ref.read(ignitionReportProvider.notifier).fetchIgnitionReport(
                         id: vehicleID!,
-                        fromDate: fromDate!,
-                        toDate: toDate!,
+                        fromDate: fromDate,
+                        toDate: toDate,
                       );
                   log("dates selected $pickedDates");
                 }

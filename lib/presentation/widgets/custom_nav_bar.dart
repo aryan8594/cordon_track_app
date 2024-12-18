@@ -1,3 +1,5 @@
+// ignore_for_file: library_private_types_in_public_api
+
 import 'dart:async';
 import 'dart:io';
 
@@ -35,6 +37,7 @@ class _CustomNavBarState extends ConsumerState<CustomNavBar> {
   void _startAlertCheck() {
     _alertCheckTimer = Timer.periodic(const Duration(seconds: 5), (_) {
       ref.read(newAlertsProvider.notifier).checkForNewAlerts();
+      // ignore: unused_result
       ref.refresh(alertsProvider); // Refresh alertsProvider
     });
   }
@@ -57,7 +60,7 @@ class _CustomNavBarState extends ConsumerState<CustomNavBar> {
       const VehicleSearchList(),
       const LiveMapPage(),
       ReportsPage(),
-      MorePage(),
+      const MorePage(),
     ];
 
     return PopScope(
@@ -68,18 +71,19 @@ class _CustomNavBarState extends ConsumerState<CustomNavBar> {
           }
 
           // Example: Show confirmation dialog
+          // ignore: unused_local_variable
           final shouldExit = await showDialog<bool>(
                 context: context,
                 builder: (context) {
                   return AlertDialog(
-                    title: Text('Exit App?'),
-                    content: Text('Do you want to exit the app?\nYou will be logged out?'),
+                    title: const Text('Exit App?'),
+                    content: const Text('Do you want to exit the app?\nYou will be logged out?'),
                     actions: [
                       TextButton(
                         onPressed: () => {
                           Navigator.of(context).pop(true)
                           },
-                        child: Text('Cancel'),
+                        child: const Text('Cancel'),
                       ),
                       TextButton(
                         onPressed: () {
@@ -89,7 +93,7 @@ class _CustomNavBarState extends ConsumerState<CustomNavBar> {
                             exit(0);
                           }
                         },
-                        child: Text('Exit'),
+                        child: const Text('Exit'),
                       ),
                     ],
                   );
@@ -99,6 +103,8 @@ class _CustomNavBarState extends ConsumerState<CustomNavBar> {
         },
         child: Scaffold(
           appBar: AppBar(
+            // backgroundColor: Theme.of(context).//colorScheme.primary,
+            // foregroundColor:Theme.of(context).//colorScheme.primary,
             leading: Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [

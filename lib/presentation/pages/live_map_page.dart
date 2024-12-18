@@ -1,19 +1,16 @@
+// ignore_for_file: library_private_types_in_public_api, use_build_context_synchronously
+
 import 'dart:developer';
 import 'package:geolocator/geolocator.dart';
 import 'package:cordon_track_app/business_logic/map_controller_provider.dart';
 import 'package:cordon_track_app/business_logic/navigate_to_search_provider.dart';
 import 'package:cordon_track_app/business_logic/search_query_provider.dart';
-import 'package:cordon_track_app/data/data_providers/live_vehicle_provider.dart';
 import 'package:cordon_track_app/business_logic/marker_provider.dart';
-import 'package:cordon_track_app/data/data_providers/single_live_vehicle_provider.dart';
-import 'package:cordon_track_app/presentation/widgets/vehicle_info_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'dart:async';
-
-import '../../data/models/live_vehicle_model.dart';
 
 class LiveMapPage extends ConsumerStatefulWidget {
   const LiveMapPage({super.key});
@@ -26,15 +23,16 @@ class _LiveMapPageState extends ConsumerState<LiveMapPage> {
   Timer? _updateTimer;
   // Completer<GoogleMapController> _controller = Completer();
   late MapControllerNotifier mapControllerNotifier;
+  // ignore: unused_field
   LatLng? _initialLocation;
 
   @override
   void initState() {
     super.initState();
     initializeMap();
+    ref.read(markerProvider.notifier).updateMarkers(context);
     mapControllerNotifier = ref.read(mapControllerProvider.notifier);
     _startUpdateTimer();
-
   }
 
   void _startUpdateTimer() {
@@ -56,11 +54,11 @@ class _LiveMapPageState extends ConsumerState<LiveMapPage> {
         });
       } catch (e) {
         // Handle error (e.g., location services off)
-        print("Error fetching location: $e");
+        log("Error fetching location: $e");
       }
     } else {
       // Handle permission denied
-      print("Location permission denied");
+      log("Location permission denied");
     }
   }
 
@@ -74,7 +72,7 @@ class _LiveMapPageState extends ConsumerState<LiveMapPage> {
 
   Future<Position> getCurrentLocation() async {
     return await Geolocator.getCurrentPosition(
-      locationSettings: LocationSettings(
+      locationSettings: const LocationSettings(
         accuracy: LocationAccuracy.high,
         distanceFilter: 10,
       ),
@@ -93,103 +91,117 @@ class _LiveMapPageState extends ConsumerState<LiveMapPage> {
     final filteredVehicles = ref.watch(filteredVehiclesProvider);
     final isSearchVisible = ref.watch(isSearchVisibleProvider);
     final mapControllerNotifier = ref.read(mapControllerProvider.notifier);
+    final initialCameraPositionAsync = ref.watch(initialCameraPositionProvider);
 
     // final mapController = ref.read(mapControllerProvider);
 
     return Scaffold(
-      body: _initialLocation == null
-      ?Center(child: CircularProgressIndicator()) // Loading state
-      :Stack(
-        children: [
-          GoogleMap(
-            key: const PageStorageKey('MapPage'),
-            zoomControlsEnabled: false,
-            markers: markers,
-            initialCameraPosition: CameraPosition(
-              target: _initialLocation ?? LatLng(12.976692, 77.576249),
-              zoom:12,
-            ),
-            onMapCreated: (controller) async {
-              controller.setMapStyle(Utils.mapStyles);
+      body:
+          // markers.isEmpty
+          // ?const Center(child: CircularProgressIndicator()) // Loading state
+          // :
+          initialCameraPositionAsync.when(
+        data: (initialCameraPosition) {
+          return Stack(
+            children: [
+              GoogleMap(
+                key: const PageStorageKey('MapPage'),
+                zoomControlsEnabled: false,
+                markers: markers,
+                initialCameraPosition: initialCameraPosition,
+                // CameraPosition(
+                //   target: _initialLocation ?? const LatLng(12.976692, 77.576249),
+                //   zoom:12,
+                // ),
+                onMapCreated: (controller) async {
+                  // ignore: deprecated_member_use
+                  controller.setMapStyle(Utils.mapStyles);
 
-              await mapControllerNotifier.initializeController(controller);
-              log("controller initalized");
+                  await mapControllerNotifier.initializeController(controller);
+                  log("controller initalized");
 
-              // ref.read(markerProvider.notifier).attachMapController(controller);
-
-              ref.read(markerProvider.notifier).updateMarkers(context);
-            },
-            myLocationEnabled: true,
-            compassEnabled: true,
-            rotateGesturesEnabled: false,
-          ),
-          Positioned(
-            right: 5,
-            top: 50,
-            child: IconButton(
-              icon: Icon(isSearchVisible ? Icons.close : Icons.search),
-              onPressed: () {
-                ref.read(isSearchVisibleProvider.notifier).state =
-                    !isSearchVisible;
-                if (!isSearchVisible) {
-                  ref.read(searchQueryProvider.notifier).state = '';
-                }
-              },
-            ),
-          ),
-          if (isSearchVisible)
-            Positioned(
-              top: 100,
-              left: 10,
-              right: 10,
-              child: Column(
-                children: [
-                  Row(
+                  // ref.read(markerProvider.notifier).attachMapController(controller);
+                },
+                myLocationEnabled: true,
+                compassEnabled: true,
+                rotateGesturesEnabled: false,
+              ),
+              Positioned(
+                left: 5,
+                top: 10,
+                child: IconButton(
+                  icon: Icon(isSearchVisible ? Icons.close : Icons.search),
+                  onPressed: () {
+                    ref.read(isSearchVisibleProvider.notifier).state =
+                        !isSearchVisible;
+                    if (!isSearchVisible) {
+                      ref.read(searchQueryProvider.notifier).state = '';
+                    }
+                  },
+                ),
+              ),
+              if (isSearchVisible)
+                Positioned(
+                  top: 60,
+                  left: 10,
+                  right: 10,
+                  child: Column(
                     children: [
-                      Expanded(
-                        child: TextField(
-                          onChanged: (query) => ref
-                              .read(searchQueryProvider.notifier)
-                              .state = query,
-                          decoration: const InputDecoration(
-                            hintText: 'Search by RTO...',
-                            border: OutlineInputBorder(),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextField(
+                              onChanged: (query) => ref
+                                  .read(searchQueryProvider.notifier)
+                                  .state = query,
+                              decoration: const InputDecoration(
+                                hintText: 'Search by RTO Number...',
+                                border: OutlineInputBorder(),
+                              ),
+                            ),
                           ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
-                  if (filteredVehicles.isNotEmpty)
-                    Container(
-                      height: 150,
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.95),
-                        borderRadius: BorderRadius.circular(5),
-                        boxShadow: [
-                          BoxShadow(color: Colors.black12, blurRadius: 4)
                         ],
                       ),
-                      child: ListView.builder(
-                        itemCount: filteredVehicles.length,
-                        itemBuilder: (context, index) {
-                          final vehicle = filteredVehicles[index];
-                          return ListTile(
-                            title: Text(vehicle.rto ?? 'Unknown RTO'),
-                            subtitle: Text('Vehicle ID: ${vehicle.id}'),
-                            onTap: () {
-                              navigateToVehicle(ref, vehicle, context);
-                              ref.read(isSearchVisibleProvider.notifier).state =
-                                  !isSearchVisible;
+                      const SizedBox(height: 10),
+                      if (filteredVehicles.isNotEmpty)
+                        Container(
+                          height: 150,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.95),
+                            borderRadius: BorderRadius.circular(5),
+                            boxShadow: const [
+                              BoxShadow(color: Colors.black12, blurRadius: 4)
+                            ],
+                          ),
+                          child: ListView.builder(
+                            itemCount: filteredVehicles.length,
+                            itemBuilder: (context, index) {
+                              final vehicle = filteredVehicles[index];
+                              return ListTile(
+                                title: Text(vehicle.rto ?? 'Unknown RTO'),
+                                // subtitle: Text('Vehicle ID: ${vehicle.id}'),
+                                onTap: () {
+                                  navigateToVehicle(ref, vehicle, context);
+                                  ref
+                                      .read(isSearchVisibleProvider.notifier)
+                                      .state = !isSearchVisible;
+                                },
+                              );
                             },
-                          );
-                        },
-                      ),
-                    ),
-                ],
-              ),
-            ),
-        ],
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+            ],
+          );
+        },
+        loading: () => const Center(
+          child: CircularProgressIndicator(),
+        ),
+        error: (error, stackTrace) => Center(
+          child: Text('Error loading map: $error'),
+        ),
       ),
     );
   }

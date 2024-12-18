@@ -1,12 +1,11 @@
 import 'package:cordon_track_app/data/data_providers/reports/speed_report_provider.dart';
-import 'package:cordon_track_app/data/data_providers/reports/travelled_path_provider.dart';
 import 'package:data_table_2/data_table_2.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 
 class SpeedReportResult extends ConsumerStatefulWidget {
-  const SpeedReportResult({Key? key}) : super(key: key);
+  const SpeedReportResult({super.key});
 
   @override
   ConsumerState<SpeedReportResult> createState() => _SpeedReportResultState();
@@ -27,12 +26,15 @@ class _SpeedReportResultState extends ConsumerState<SpeedReportResult> {
 
 
     return Scaffold(
-      appBar: AppBar(title: const Text("Speed Report")),
+      //colorScheme.secondary,
+      appBar: AppBar(
+        //colorScheme.secondary,
+        title: const Text("Speed Report")),
       body: Padding(
         padding: const EdgeInsets.all(5),
         child: speedReport.when(
           data: (data) {
-            if (data == null || data.data!.isEmpty) {
+            if (data.data!.isEmpty) {
               return const Center(
                 child: Text("No data available."),
               );
@@ -66,10 +68,10 @@ class _SpeedReportResultState extends ConsumerState<SpeedReportResult> {
                     (item) => DataRow(
                       
                       cells: [
-                        DataCell(Text('${item.datetime}')),
+                        DataCell(Text(item.datetime ?? "Not Available")),
                         DataCell(Text('${convert1000Format(item.acumulatedDistance!)} km')),
-                        DataCell(Text('${item.speed} km/h')),
-                        DataCell(Text('${item.location}')),
+                        DataCell(Text('${item.speed ?? "Not Available"} km/h')),
+                        DataCell(Text(item.location ?? "Not Available")),
                       ],
                     ),
                   )

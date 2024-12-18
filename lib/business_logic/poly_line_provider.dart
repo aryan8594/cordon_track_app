@@ -1,11 +1,11 @@
 // StateNotifier for managing polyline state for a specific vehicle
+
 import 'dart:developer';
 
 import 'package:cordon_track_app/business_logic/map_controller_provider.dart';
 import 'package:cordon_track_app/data/data_providers/vehicle_history_provider.dart';
 import 'package:cordon_track_app/data/models/polyline_state_model.dart';
 import 'package:cordon_track_app/data/models/vehicle_history_model.dart';
-import 'package:cordon_track_app/data/repositories/vehicle_history_api.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -63,10 +63,9 @@ class PolyLineNotifier extends StateNotifier<PolylineStateModel> {
       final direction = state.markers
               .firstWhere(
                 (marker) => marker.position == newPosition,
-                orElse: () => const Marker(markerId: const MarkerId('default')),
+                orElse: () => const Marker(markerId: MarkerId('default')),
               )
-              .rotation ??
-          0.0;
+              .rotation;
 
       updatePlaybackMarker(newPosition, direction, index);
 
@@ -89,11 +88,11 @@ class PolyLineNotifier extends StateNotifier<PolylineStateModel> {
     final historyData = vehicleHistory![index];
     final dateTime = historyData.datetime ?? 'Unknown DateTime';
     final speed = historyData.speed ?? 'Unknown Speed';
-    final ignition = historyData.ignitionStatus ?? "Unnkown";
+    // final ignition = historyData.ignitionStatus ?? "Unnkown";
     final stoppage = historyData.duration ?? 0;
 
-    String ignitionStatus = "ON";
-    ignition == "1" ? ignitionStatus = "ON" : ignitionStatus = "OFF";
+    // String ignitionStatus = "ON";
+    // ignition == "1" ? ignitionStatus = "ON" : ignitionStatus = "OFF";
 
     final BitmapDescriptor customPlaybackIcon = await BitmapDescriptor.asset(
       const ImageConfiguration(size: Size(24, 45)),
@@ -112,7 +111,7 @@ class PolyLineNotifier extends StateNotifier<PolylineStateModel> {
         title: dateTime,
         snippet: stoppage > 60
             ? 'Stoppage Duration: ${convertSecondsToHoursMinutes(stoppage)}'
-            : 'Speed: ${speed} km/h',
+            : 'Speed: $speed km/h',
       ),
     );
 
@@ -132,7 +131,7 @@ class PolyLineNotifier extends StateNotifier<PolylineStateModel> {
     if (!mounted) return;
 
     // Clear current polyline and marker data
-    state = PolylineStateModel();
+    state = const PolylineStateModel();
     log("PolyLineNotifier: Clearing polyline and markers state.");
 
     // Fetch new history data from the repository
@@ -203,7 +202,7 @@ class PolyLineNotifier extends StateNotifier<PolylineStateModel> {
           infoWindow: InfoWindow(
             anchor: const Offset(0.5, 0.5),
             title: history.duration! > 60
-                ? 'Stoppage Duration: ${convertSecondsToHoursMinutes(history.duration!) ?? 'Unknown'}'
+                ? 'Stoppage Duration: ${convertSecondsToHoursMinutes(history.duration ?? 0)}'
                 : 'Speed: ${history.speed ?? 'N/A'} km/h',
             snippet: ('${history.datetime}'),
           ),
@@ -260,6 +259,7 @@ final polylineStateProvider =
 
 final markerStateProvider =
     Provider.family.autoDispose<Set<Marker>, String>((ref, vehicleId) {
+  ref.keepAlive(); // Prevent disposal until explicitly cleared
   final polylineState = ref.watch(polyLineProvider(vehicleId));
   return polylineState.markers;
 });

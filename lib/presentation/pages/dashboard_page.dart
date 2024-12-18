@@ -24,6 +24,7 @@ class DashboardPage extends ConsumerStatefulWidget {
 
 class _DashboardPageState extends ConsumerState<DashboardPage> {
   Timer? _updateTimer;
+  // ignore: unused_field
   LatLng? _initialLocation; // Nullable until initialized
 
   @override
@@ -31,7 +32,6 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
     super.initState();
     _startUpdateTimer();
     initializeMap();
-
   }
 
   void _startUpdateTimer() {
@@ -91,6 +91,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
     final dashboardState = ref.watch(dashboardProvider);
 
     return Scaffold(
+      // //colorScheme.secondary,
       body: Column(
         children: [
           const Padding(
@@ -113,7 +114,25 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
             child: dashboardState.when(
               data: (data) => _buildDashboardContent(context, data),
               loading: () => const Center(child: CircularProgressIndicator()),
-              error: (err, _) => Center(child: Text('Error: $err')),
+              error: (err, _) => (const Column(
+                children: [
+                  Spacer(),
+                  Icon(
+                    Icons.signal_wifi_connected_no_internet_4_rounded,
+                    size: 200,
+                    color: Colors.redAccent,
+                  ),
+                  Text(
+                    "NO INTERNET\nAVAILABLE",
+                    style: TextStyle(
+                      fontSize: 30,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  Spacer()
+                ],
+              )),
             ),
           ),
         ],
@@ -146,6 +165,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
     };
     final markers = ref.watch(markerProvider);
     final mapControllerNotifier = ref.read(mapControllerProvider.notifier);
+    final initialCameraPositionAsync = ref.watch(initialCameraPositionProvider);
 
     return SingleChildScrollView(
       child: Column(
@@ -171,31 +191,44 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                         padding: const EdgeInsets.all(2),
                         width: 175,
                         height: 300,
-                        child:  _initialLocation == null
-                        ?const Center(child: CircularProgressIndicator()) // Loading state
-                        :GoogleMap(
-                          key: const PageStorageKey('MapPage'),
-                          zoomControlsEnabled: false,
-                          markers: markers,
-                          initialCameraPosition: CameraPosition(
-                            target: _initialLocation ?? const LatLng(12.976692, 77.576249),
-                            zoom: 10,
-                          ),
-                          onMapCreated: (controller) async {
-                            // ignore: deprecated_member_use
-                            controller.setMapStyle(Utils.mapStyles);
-                            await mapControllerNotifier
-                                .initializeController(controller);
-                            log("controller initialized");
-                            ref
-                                .read(markerProvider.notifier)
-                                // ignore: use_build_context_synchronously
-                                .updateMarkers(context);
+                        child:
+                            // markers.isEmpty
+                            // ?const Center(child: CircularProgressIndicator()) // Loading state
+                            // :
+                            initialCameraPositionAsync.when(
+                          data: (initialCameraPosition) {
+                            return GoogleMap(
+                              key: const PageStorageKey('MapPage'),
+                              zoomControlsEnabled: false,
+                              markers: markers,
+                              initialCameraPosition: initialCameraPosition,
+                              // CameraPosition(
+                              //   target: _initialLocation ?? const LatLng(12.976692, 77.576249),
+                              //   zoom: 10,
+                              // ),
+                              onMapCreated: (controller) async {
+                                // ignore: deprecated_member_use
+                                controller.setMapStyle(Utils.mapStyles);
+                                await mapControllerNotifier
+                                    .initializeController(controller);
+                                log("controller initialized");
+                                ref
+                                    .read(markerProvider.notifier)
+                                    // ignore: use_build_context_synchronously
+                                    .updateMarkers(context);
+                              },
+                              myLocationEnabled: true,
+                              myLocationButtonEnabled: false,
+                              compassEnabled: true,
+                              rotateGesturesEnabled: false,
+                            );
                           },
-                          myLocationEnabled: true,
-                          myLocationButtonEnabled : false,
-                          compassEnabled: true,
-                          rotateGesturesEnabled: false,
+                          loading: () => const Center(
+                            child: CircularProgressIndicator(),
+                          ),
+                          error: (error, stackTrace) => Center(
+                            child: Text('Error loading map: $error'),
+                          ),
                         ),
                       ),
                       // Transparent overlay to block interactions with the map
@@ -242,7 +275,8 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                               dashboardData.data!.panicCount!.toDouble() > 0
                                   ? "Panic Alerts: ${dashboardData.data?.panicCount?.toString() ?? 0}"
                                   : "No Panic Alerts",
-                              style: const TextStyle(fontWeight: FontWeight.bold),
+                              style:
+                                  const TextStyle(fontWeight: FontWeight.bold),
                             )
                           ],
                         ),
@@ -251,7 +285,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                   ),
                   InkWell(
                     onTap: () {
-                      // Navigate to LiveMapPage (index 2)
+                      // Navigate to VehicleList (index 1)
                       ref.read(navigationIndexProvider.notifier).state = 1;
                     },
                     child: Card(
@@ -286,7 +320,8 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                                 ],
                               ),
                               Text(
-                                  style: const TextStyle(fontWeight: FontWeight.w500),
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.w500),
                                   dashboardData.data!.speed80!.toDouble() > 0
                                       ? "${dashboardData.data?.speed80?.toString() ?? 0} (Over 80km/h)"
                                       : "${dashboardData.data?.speed30?.toString() ?? 0} (Over 30km/h)"),

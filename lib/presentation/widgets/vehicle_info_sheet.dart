@@ -1,10 +1,8 @@
 // lib/presentation/widgets/vehicle_info_sheet.dart
+// ignore_for_file: use_build_context_synchronously
+
 import 'dart:developer';
-import 'package:cordon_track_app/presentation/widgets/tab_bar_widget.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:cordon_track_app/business_logic/marker_provider.dart';
 import 'package:cordon_track_app/data/data_providers/single_live_vehicle_provider.dart';
-import 'package:cordon_track_app/data/models/single_live_vehicle_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:top_modal_sheet/top_modal_sheet.dart';
@@ -15,8 +13,7 @@ import 'package:url_launcher/url_launcher.dart';
 class BottomVehicleInfoSheet extends ConsumerWidget {
   final String vehicleId;
 
-  const BottomVehicleInfoSheet({Key? key, required this.vehicleId})
-      : super(key: key);
+  const BottomVehicleInfoSheet({super.key, required this.vehicleId});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -46,9 +43,9 @@ class BottomVehicleInfoSheet extends ConsumerWidget {
 
         var vehicleInfo =
             vehicle.data![0]; // Access the first item in the data list
-        double? speed = vehicleInfo.speed != null
-            ? double.tryParse(vehicleInfo.speed!)
-            : null;
+        // double? speed = vehicleInfo.speed != null
+        //     ? double.tryParse(vehicleInfo.speed!)
+        //     : null;
 
         return Stack(
           alignment: Alignment.center,
@@ -74,7 +71,11 @@ class BottomVehicleInfoSheet extends ConsumerWidget {
                           mainAxisAlignment: MainAxisAlignment.start,
                           children: [
                             IconButton(
-                              icon: const Icon(Icons.share, color: Colors.lightBlueAccent,size: 30,),
+                              icon: const Icon(
+                                Icons.share,
+                                color: Colors.lightBlueAccent,
+                                size: 30,
+                              ),
                               onPressed: () {
                                 if (vehicleInfo.latitude != null &&
                                     vehicleInfo.longitude != null) {
@@ -101,7 +102,11 @@ class BottomVehicleInfoSheet extends ConsumerWidget {
                           mainAxisAlignment: MainAxisAlignment.start,
                           children: [
                             IconButton(
-                              icon: Icon(Icons.directions, color: Colors.lightBlueAccent,size: 30,),
+                              icon: const Icon(
+                                Icons.directions,
+                                color: Colors.lightBlueAccent,
+                                size: 30,
+                              ),
                               onPressed: () {
                                 if (vehicleInfo.latitude != null &&
                                     vehicleInfo.longitude != null) {
@@ -111,7 +116,7 @@ class BottomVehicleInfoSheet extends ConsumerWidget {
                                       mode: LaunchMode.externalApplication);
                                 } else {
                                   ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
+                                    const SnackBar(
                                         content: Text(
                                             "Unable to navigate. Location unavailable")),
                                   );
@@ -121,22 +126,39 @@ class BottomVehicleInfoSheet extends ConsumerWidget {
                             const Text("Navigate"),
                           ],
                         ),
-                      //   Column(
-                      //     mainAxisAlignment: MainAxisAlignment.start,
-                      //     children: [
-                      //       IconButton(
-                      //         icon: Icon(Icons.info, color: Colors.lightBlueAccent,size: 30,),
-                      //         onPressed: () {
-                      //           Navigator.push(
-                      //   context,
-                      //   MaterialPageRoute(
-                      //       builder: (context) => TabBarWidget(specificVehicleID: vehicleInfo.id ?? "", vehicleRTO: vehicleInfo.rto ?? '',)),
-                      // );
-                      //         },
-                      //       ),
-                      //       const Text("Detailed\nView",textAlign: TextAlign.center,),
-                      //     ],
-                      //   )
+                        // Column(
+                        //   mainAxisAlignment: MainAxisAlignment.start,
+                        //   children: [
+                        //     IconButton(
+                        //       icon: const Icon(
+                        //         Icons.info,
+                        //         color: Colors.lightBlueAccent,
+                        //         size: 30,
+                        //       ),
+                        //       onPressed: () async {
+                        //         // Navigator.of(context).pop();
+                        //         // await Future.delayed(const Duration(milliseconds: 500));
+                        //         // ref
+                        //         //     .read(navigationIndexProvider.notifier)
+                        //         // //     .state = 1;
+                        //         // await Future.delayed(const Duration(milliseconds: 500));
+                        //         Navigator.push(
+                        //           context,
+                        //           MaterialPageRoute(
+                        //               builder: (context) => TabBarWidget(
+                        //                     specificVehicleID:
+                        //                         vehicleInfo.id ?? "",
+                        //                     vehicleRTO: vehicleInfo.rto ?? '',
+                        //                   )),
+                        //         );
+                        //       },
+                        //     ),
+                        //     const Text(
+                        //       "Detailed\nView",
+                        //       textAlign: TextAlign.center,
+                        //     ),
+                        //   ],
+                        // )
                       ],
                     ),
                     const SizedBox(
@@ -150,11 +172,11 @@ class BottomVehicleInfoSheet extends ConsumerWidget {
                     const SizedBox(
                       height: 10,
                     ),
-                    Text(
-                      "Vehicle ID: ${vehicleInfo.id}",
-                      style:
-                          TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-                    ),
+                    // Text(
+                    //   "Vehicle ID: ${vehicleInfo.id}",
+                    //   style:
+                    //       const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                    // ),
                     const SizedBox(
                       height: 10,
                     ),
@@ -164,17 +186,17 @@ class BottomVehicleInfoSheet extends ConsumerWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         children: [
-                          Text(
+                          const Text(
                             "Location",
                             style: TextStyle(fontSize: 12),
                           ),
-                          Text(
+                          const Text(
                             ":",
                             style: TextStyle(fontSize: 12),
                           ),
                           Flexible(
                             child: Text("${vehicleInfo.location}",
-                                style: TextStyle(fontSize: 12),
+                                style: const TextStyle(fontSize: 12),
                                 overflow: TextOverflow.clip,
                                 softWrap: true,
                                 maxLines: 5),
@@ -201,7 +223,7 @@ class BottomVehicleInfoSheet extends ConsumerWidget {
                                 ),
                                 Text(
                                   "${vehicleInfo.distanceToday} Kms",
-                                  style: TextStyle(
+                                  style: const TextStyle(
                                       fontWeight: FontWeight.bold,
                                       fontSize: 15),
                                 )
@@ -210,8 +232,8 @@ class BottomVehicleInfoSheet extends ConsumerWidget {
                             Column(
                               crossAxisAlignment: CrossAxisAlignment.center,
                               children: [
-                                Text(
-                                  "Idle Since",
+                                const Text(
+                                  "Idle Time",
                                   style: TextStyle(
                                       fontSize: 12, color: Colors.grey),
                                 ),
@@ -227,7 +249,7 @@ class BottomVehicleInfoSheet extends ConsumerWidget {
                               crossAxisAlignment: CrossAxisAlignment.center,
                               children: [
                                 const Text(
-                                  "Stoppage Since",
+                                  "Stoppage Time",
                                   style: TextStyle(
                                       fontSize: 12, color: Colors.grey),
                                 ),
@@ -254,12 +276,12 @@ class BottomVehicleInfoSheet extends ConsumerWidget {
                 decoration: const BoxDecoration(
                     shape: BoxShape.circle, color: Colors.transparent),
                 child: ElevatedButton(
-                    style: ButtonStyle(
+                    style: const ButtonStyle(
                         backgroundColor: WidgetStateColor.transparent),
                     onPressed: () => Navigator.of(context)
                       ..pop()
                       ..pop(),
-                    child: Icon(
+                    child: const Icon(
                       Icons.close,
                       size: 30,
                       color: Colors.black,
@@ -278,8 +300,7 @@ class BottomVehicleInfoSheet extends ConsumerWidget {
 class TopVehicleInfoSheet extends ConsumerWidget {
   final String vehicleId;
 
-  const TopVehicleInfoSheet({Key? key, required this.vehicleId})
-      : super(key: key);
+  const TopVehicleInfoSheet({super.key, required this.vehicleId});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -370,15 +391,33 @@ class TopVehicleInfoSheet extends ConsumerWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    speed == 0
-                        ? const Icon(
-                            Icons.adjust_rounded,
-                            color: Colors.yellow,
-                          )
-                        : const Icon(
-                            Icons.adjust_rounded,
-                            color: Colors.green,
-                          ),
+                    Column(
+                      children: [
+                        speed == 0
+                            ? const Icon(
+                                Icons.adjust_rounded,
+                                color: Colors.yellow,
+                              )
+                            : const Icon(
+                                Icons.adjust_rounded,
+                                color: Colors.green,
+                              ),
+                        vehicleInfo.panicStatus == "0"
+                            ? const SizedBox()
+                            : const Icon(
+                                Icons.report_problem_rounded,
+                                color: Colors.redAccent,
+                                size: 25,
+                              ),
+                        vehicleInfo.gpsStatus == '1'
+                            ? const SizedBox()
+                            : const Icon(
+                                Icons.gps_off_rounded,
+                                size: 25,
+                                color: Colors.redAccent,
+                              ),
+                      ],
+                    ),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -404,8 +443,7 @@ class TopVehicleInfoSheet extends ConsumerWidget {
                                     fontSize: 10, color: Colors.grey),
                               )
                             : Text(
-
-                                "Vehicle Idle Since: ${convertSecondsToHoursMinutes(vehicleInfo.idleSince!)}\nVehicle Stoppage since: ${convertSecondsToHoursMinutes(vehicleInfo.stoppageSince!)}",
+                                "Vehicle Idle Time: ${convertSecondsToHoursMinutes(vehicleInfo.idleSince!)}\nVehicle Stoppage Time: ${convertSecondsToHoursMinutes(vehicleInfo.stoppageSince!)}",
                                 style: const TextStyle(
                                     fontSize: 10, color: Colors.grey),
                               ),
@@ -415,8 +453,8 @@ class TopVehicleInfoSheet extends ConsumerWidget {
                             overflow: TextOverflow.fade,
                             maxLines: 5,
                             "Data Received : ${timePassedSince(vehicleInfo.datetime!)} ago",
-                            style:
-                                const TextStyle(fontSize: 10, color: Colors.grey),
+                            style: const TextStyle(
+                                fontSize: 10, color: Colors.grey),
                           ),
                         )
                       ],
@@ -474,7 +512,7 @@ class TopVehicleInfoSheet extends ConsumerWidget {
                                 children: [
                                   Text(
                                     "${vehicleInfo.externalBatteryVoltage} v",
-                                    style: TextStyle(fontSize: 15),
+                                    style: const TextStyle(fontSize: 15),
                                   ),
                                   externalBatteryVoltage! < 9
                                       ? const Icon(
@@ -490,7 +528,7 @@ class TopVehicleInfoSheet extends ConsumerWidget {
                                 ],
                               ),
                         vehicleInfo.acStatus == null
-                            ? SizedBox()
+                            ? const SizedBox()
                             : Row(
                                 children: [
                                   vehicleInfo.acStatus == "0"
@@ -511,8 +549,8 @@ class TopVehicleInfoSheet extends ConsumerWidget {
                                               color: Colors.green,
                                             )
                                           : vehicleInfo.acStatus == null
-                                              ? SizedBox()
-                                              : SizedBox()
+                                              ? const SizedBox()
+                                              : const SizedBox()
                                 ],
                               ),
                       ],
@@ -543,17 +581,17 @@ class TopVehicleInfoSheet extends ConsumerWidget {
                               //   style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
                               // ),
                               Icon(
-                                gsmSingnalStrength! > 18
+                                gsmSingnalStrength > 18
                                     ? Icons.signal_cellular_alt_rounded
-                                    : gsmSingnalStrength! > 8
+                                    : gsmSingnalStrength > 8
                                         ? Icons
                                             .signal_cellular_alt_2_bar_rounded
                                         : Icons
                                             .signal_cellular_alt_1_bar_rounded,
                                 size: 25,
-                                color: gsmSingnalStrength! > 18
+                                color: gsmSingnalStrength > 18
                                     ? Colors.green
-                                    : gsmSingnalStrength! > 8
+                                    : gsmSingnalStrength > 8
                                         ? Colors.yellow
                                         : Colors.red,
                               )
@@ -613,6 +651,6 @@ void resetVehicleId(String? vehicleId, Ref ref) async {
     });
 
     // Future.microtask(() => ref.read(selectedVehicleIdProvider.notifier).state = null);
-    log("Vehicle ID reset to null: ${vehicleId}");
+    log("Vehicle ID reset to null: $vehicleId");
   }
 }

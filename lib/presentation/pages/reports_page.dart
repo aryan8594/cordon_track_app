@@ -49,9 +49,12 @@ class ReportsPage extends StatelessWidget {
     ),
   ];
 
+  ReportsPage({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      // //colorScheme.secondary,
       body: ListView.builder(
         itemCount: reportCardData.length,
         itemBuilder: (context, index) {
@@ -60,12 +63,12 @@ class ReportsPage extends StatelessWidget {
             margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
             elevation: 4,
             child: ListTile(
-              title: Text(report.title, style: TextStyle(fontWeight: FontWeight.bold)),
+              title: Text(report.title, style: const TextStyle(fontWeight: FontWeight.bold)),
               subtitle: Text(report.description),
-              trailing: Column(
+              trailing: const Column(
                 children: [
                   
-                  const Icon(Icons.arrow_forward),
+                  Icon(Icons.arrow_forward),
                   Text("Generate\nReport",textAlign: TextAlign.center),
                 ],
               ),

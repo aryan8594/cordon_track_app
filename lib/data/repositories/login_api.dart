@@ -15,12 +15,12 @@ Future<LoginModel?> userLogin(String user, String password) async {
     if (logres.statusCode == 200) {
       var jsonResponse = jsonDecode(logres.body);
 
-      log(logres.body);
+      // log(logres.body);
 
       if (jsonResponse['status'] == true) {
         LoginModel model = LoginModel.fromJson(jsonResponse);
         savedToken = model.token;
-        log("Auth Token : " + "${model.token}");
+        // log("Auth Token : ${model.token}");
         log('Login successfully');
         return model;
       } else {
@@ -30,7 +30,7 @@ Future<LoginModel?> userLogin(String user, String password) async {
       log("Failed with status code: ${logres.statusCode}");
     }
   } catch (e) {
-    print(e);
+    log('$e');
   }
   return null;
 

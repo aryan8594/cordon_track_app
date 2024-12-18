@@ -1,3 +1,5 @@
+// ignore_for_file: unnecessary_brace_in_string_interps
+
 import 'dart:convert';
 import 'dart:developer';
 import 'package:cordon_track_app/data/data_providers/login_provider.dart';

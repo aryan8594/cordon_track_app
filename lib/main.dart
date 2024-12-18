@@ -23,12 +23,18 @@ void main() async {
   final prefs = await SharedPreferences.getInstance();
 
   final isFirstTime = prefs.getBool('isFirstTime') ?? true; // Default to true
-  final hasLoginInfo = prefs.containsKey('username') && prefs.containsKey('password');
-  runApp(ProviderScope(child: (MyApp(initialPage: isFirstTime ? OnboardingPage() : (hasLoginInfo ? LoginPage() : OnboardingPage()),))));
+  final hasLoginInfo =
+      prefs.containsKey('username') && prefs.containsKey('password');
+  runApp(ProviderScope(
+      child: (MyApp(
+    initialPage: isFirstTime
+        ? const OnboardingPage()
+        : (hasLoginInfo ? const LoginPage() : const OnboardingPage()),
+  ))));
 }
 
 class MyApp extends StatelessWidget {
- final Widget initialPage;
+  final Widget initialPage;
 
   const MyApp({super.key, required this.initialPage});
 
@@ -36,33 +42,37 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      debugShowCheckedModeBanner:false, 
+      debugShowCheckedModeBanner: false,
       routes: {
-      '/reportPage': (context) => ReportsPage(),
-      '/travelledPath': (context) => TravelledPathPage(),
-      '/distanceReport': (context) => DistanceReportPage(),
-      '/speedReport': (context) => SpeedReportPage(),
-      '/stoppageReport': (context) => StoppageReportPage(),
-      '/idleReport': (context) => IdleReportPage(),
-      '/ignitionReport': (context) => IgnitionReportPage(),
-      '/tripReport': (context) => TripReportPage(),
-      '/dailyReport': (context) => DailyReportPage(),
-      '/geofenceReport': (context) => GeofenceReportPage(),
-      '/loginPage': (context) => LoginPage(),
-      '/navBar': (context) => CustomNavBar(),
-      '/liveMap': (context) => LiveMapPage(),
-      '/alert': (context) => AlertsPage (),
-      '/more': (context) => MorePage(),
-
-    },
-      title: 'Flutter Demo',
+        '/reportPage': (context) => ReportsPage(),
+        '/travelledPath': (context) => const TravelledPathPage(),
+        '/distanceReport': (context) => const DistanceReportPage(),
+        '/speedReport': (context) => const SpeedReportPage(),
+        '/stoppageReport': (context) => const StoppageReportPage(),
+        '/idleReport': (context) => const IdleReportPage(),
+        '/ignitionReport': (context) => const IgnitionReportPage(),
+        '/tripReport': (context) => const TripReportPage(),
+        '/dailyReport': (context) => const DailyReportPage(),
+        '/geofenceReport': (context) => const GeofenceReportPage(),
+        '/loginPage': (context) => const LoginPage(),
+        '/navBar': (context) => const CustomNavBar(),
+        '/liveMap': (context) => const LiveMapPage(),
+        '/alert': (context) => const AlertsPage(),
+        '/more': (context) => const MorePage(),
+      },
+      title: 'Cordon Track',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.white),
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: Colors.white,
+          // primary: Colors.white,
+          // secondary: Colors.white,
+          // tertiary: Colors.white
+        ),
         useMaterial3: true,
+      //  fontFamily: 'Comic Sans Ms',
       ),
-      home:initialPage,
+      home: initialPage,
       // CustomNavBar(),
     );
   }
 }
-

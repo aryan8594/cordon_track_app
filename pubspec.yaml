@@ -1,5 +1,5 @@
 name: cordon_track_app
-description: "A new Flutter project."
+description: "A mobile alternative to our beloved Cordon Track webiste."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
@@ -16,7 +16,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 1.0.0+1
+version: 1.0.0
 
 environment:
   sdk: ^3.5.3
@@ -60,6 +60,8 @@ dependencies:
   permission_handler: ^11.3.1
   geolocator: ^13.0.2
   webview_flutter: ^4.10.0
+  flutter_launcher_icons: ^0.14.1
+  rename: ^3.0.2
 
 dev_dependencies:
   flutter_test:
@@ -105,6 +107,8 @@ flutter:
     - lib/presentation/assets/carosel2.png
     - lib/presentation/assets/carosel3.png
     - lib/presentation/assets/carosel4.png
+    - lib/presentation/assets/cordon_track_logo_white.png
+    - lib/presentation/assets/cordon_track_logo_black.png
     - lib/presentation/assets/
 
   #   - images/a_dot_ham.jpeg

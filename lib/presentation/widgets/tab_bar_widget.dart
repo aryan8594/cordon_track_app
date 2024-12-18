@@ -1,6 +1,5 @@
 
 import 'package:cordon_track_app/presentation/pages/single_live_map_page.dart';
-import 'package:cordon_track_app/presentation/pages/single_vehicle_reports_page.dart';
 import 'package:cordon_track_app/presentation/pages/vehicle_history_page.dart';
 import 'package:flutter/material.dart';
 
@@ -19,17 +18,20 @@ class _TabBarWidgetState extends State<TabBarWidget> {
     return DefaultTabController(
       length: 2,
       child: Scaffold(
+        // //colorScheme.secondary,
         appBar: AppBar(
-          backgroundColor: Colors.white,
+          // //colorScheme.primary,
           title: Text(widget.vehicleRTO.toString(),
           style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
           maxLines:3,),
-          bottom: const PreferredSize(preferredSize: Size.fromHeight(60), 
+          bottom: const PreferredSize(preferredSize: const Size.fromHeight(60), 
           child: TabBar(
-            indicatorColor: Colors.lightBlueAccent,
-            tabs: [
-                Tab(icon: Icon(Icons.my_location, color: Colors.lightBlueAccent,),text: "Live"),
-                Tab(icon: Icon(Icons.route_rounded,color: Colors.lightBlueAccent,),text: "History"),
+            indicatorColor:Colors.blueAccent,
+            labelColor:Colors.blueAccent,
+            unselectedLabelColor: Colors.blueGrey,
+            tabs: const [
+                Tab(icon: Icon(Icons.my_location),text: "Live"),
+                Tab(icon: Icon(Icons.route_rounded),text: "History"),
                 // Tab(icon: Icon(Icons.query_stats_rounded),text: "Reports"),
 
             ]

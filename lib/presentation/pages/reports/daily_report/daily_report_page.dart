@@ -1,24 +1,16 @@
+// ignore_for_file: unnecessary_null_comparison, library_private_types_in_public_api
+
 import 'dart:developer';
 
 import 'package:board_datetime_picker/board_datetime_picker.dart';
 import 'package:cordon_track_app/business_logic/search_query_provider.dart';
-import 'package:cordon_track_app/business_logic/vehicle_search_provider.dart';
 import 'package:cordon_track_app/data/data_providers/reports/daily_report_provider.dart';
-import 'package:cordon_track_app/data/data_providers/reports/distance_report_provider.dart';
-import 'package:cordon_track_app/data/data_providers/reports/ignition_report_provider.dart';
-import 'package:cordon_track_app/data/data_providers/reports/travelled_path_provider.dart';
-import 'package:cordon_track_app/data/data_providers/reports/trip_report_provider.dart';
 import 'package:cordon_track_app/presentation/pages/reports/daily_report/daily_report_results.dart';
-import 'package:cordon_track_app/presentation/pages/reports/distance_travelled/distance_report_results.dart';
-import 'package:cordon_track_app/presentation/pages/reports/ignition_report/ignition_report_results.dart';
-import 'package:cordon_track_app/presentation/pages/reports/travelled_path/travelled_path_result.dart';
-import 'package:cordon_track_app/presentation/pages/reports/trip_report/trip_report_results.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:data_table_2/data_table_2.dart';
 
 class DailyReportPage extends ConsumerStatefulWidget {
-  const DailyReportPage({Key? key}) : super(key: key);
+  const DailyReportPage({super.key});
 
   @override
   _DailyReportPageState createState() => _DailyReportPageState();
@@ -35,10 +27,12 @@ class _DailyReportPageState extends ConsumerState<DailyReportPage> {
 
   @override
   Widget build(BuildContext context) {
-    final dailyReport = ref.watch(dailyReportProvider);
+    ref.watch(dailyReportProvider);
 
     return Scaffold(
+      // //colorScheme.secondary,
       appBar: AppBar(
+        // //colorScheme.primary,
         title: const Text("Daily Report"),
         bottom: PreferredSize(
             preferredSize: const Size.fromHeight(10), child: Container()),
@@ -78,7 +72,7 @@ class _DailyReportPageState extends ConsumerState<DailyReportPage> {
                       decoration: BoxDecoration(
                         color: Colors.white.withOpacity(0.95),
                         borderRadius: BorderRadius.circular(5),
-                        boxShadow: [
+                        boxShadow: const [
                           BoxShadow(color: Colors.black12, blurRadius: 4),
                         ],
                       ),
@@ -92,7 +86,7 @@ class _DailyReportPageState extends ConsumerState<DailyReportPage> {
                                 final vehicle = filteredVehicles[index];
                                 return ListTile(
                                   title: Text(vehicle.rto ?? 'Unknown RTO'),
-                                  subtitle: Text('Vehicle ID: ${vehicle.id}'),
+                                  // subtitle: Text('Vehicle ID: ${vehicle.id}'),
                                   onTap: () {
                                     // Populate the search text field with the RTO
                                     vehicleName = vehicle.rto ?? '';
@@ -144,19 +138,19 @@ class _DailyReportPageState extends ConsumerState<DailyReportPage> {
                             .read(dailyReportProvider.notifier)
                             .fetchDailyReport(
                               id: vehicleID!, // Use selected vehicle ID
-                              fromDate: fromDate!,
-                              toDate: toDate!,
+                              fromDate: fromDate,
+                              toDate: toDate,
                             );
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                              builder: (context) => DailyReportResult()),
+                              builder: (context) => const DailyReportResult()),
                         );
                       } else {
                         log("Missing vehicle ID or date range");
                       }
                     },
-                    child: const Text("Fetch Daily Report"),
+                    child: const Text("Fetch Daily Report", style: TextStyle(color: Colors.black),),
                   ),
                 ],
               ),
@@ -255,7 +249,7 @@ class _DailyReportPageState extends ConsumerState<DailyReportPage> {
                 setState(() {
                   fromDate =
                       DateUtil.startOfWeek().subtract(const Duration(days: 7));
-                  toDate = fromDate!.add(const Duration(days: 7));
+                  toDate = fromDate.add(const Duration(days: 7));
                   selectedRange = 'Last Week';
                 });
                 Navigator.pop(context);
@@ -339,8 +333,8 @@ class _DailyReportPageState extends ConsumerState<DailyReportPage> {
                   toDate = pickedDates.end;
                   ref.read(dailyReportProvider.notifier).fetchDailyReport(
                         id: vehicleID!,
-                        fromDate: fromDate!,
-                        toDate: toDate!,
+                        fromDate: fromDate,
+                        toDate: toDate,
                       );
                   log("dates selected $pickedDates");
                 }

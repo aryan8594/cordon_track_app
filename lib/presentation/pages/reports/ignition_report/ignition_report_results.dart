@@ -1,5 +1,4 @@
 import 'package:cordon_track_app/data/data_providers/reports/ignition_report_provider.dart';
-import 'package:cordon_track_app/data/data_providers/reports/travelled_path_provider.dart';
 import 'package:data_table_2/data_table_2.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -20,17 +19,20 @@ class _IgnitionReportResultState extends ConsumerState<IgnitionReportResult> {
     String formatSecondsToTime(int seconds) {
   int hours = seconds ~/ 3600; // Calculate the hours
   int minutes = (seconds % 3600) ~/ 60; // Calculate the remaining minutes
-  return "${hours} hr ${minutes} min";
+  return "$hours hr $minutes min";
 }
 
 
     return Scaffold(
-      appBar: AppBar(title: const Text("Ignition Report")),
+      //colorScheme.secondary,
+      appBar: AppBar(
+        //colorScheme.secondary,
+        title: const Text("Ignition Report")),
       body: Padding(
         padding: const EdgeInsets.all(5),
         child: igntionReport.when(
           data: (data) {
-            if (data == null || data.data!.isEmpty) {
+            if (data.data!.isEmpty) {
               return const Center(
                 child: Text("No data available."),
               );
@@ -70,12 +72,12 @@ class _IgnitionReportResultState extends ConsumerState<IgnitionReportResult> {
                     (item) => DataRow(
                       
                       cells: [
-                        DataCell(Text('${item.startDatetime}')),
-                        DataCell(Text('${item.startLocation}')),
-                        DataCell(Text('${item.endDatetime}')),
-                        DataCell(Text('${item.endLocation}')),
-                        DataCell(Text('${formatSecondsToTime(item.duration!)}')),
-                        DataCell(Text('${item.distance} km')),
+                        DataCell(Text(item.startDatetime  ?? "Not Available")),
+                        DataCell(Text(item.startLocation ?? "Not Available")),
+                        DataCell(Text(item.endDatetime ?? "Not Available")),
+                        DataCell(Text(item.endLocation ?? "Not Available")),
+                        DataCell(Text(formatSecondsToTime(item.duration!))),
+                        DataCell(Text('${item.distance ?? "Not Available"} km')),
                       ],
                     ),
                   )

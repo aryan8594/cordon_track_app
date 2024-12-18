@@ -1,14 +1,13 @@
 // navigation_providers.dart
 
-import 'dart:async';
+// ignore_for_file: implementation_imports
+
 import 'dart:developer';
 
 import 'package:cordon_track_app/business_logic/map_controller_provider.dart';
 import 'package:cordon_track_app/business_logic/marker_provider.dart';
 import 'package:cordon_track_app/business_logic/search_query_provider.dart';
 import 'package:cordon_track_app/data/models/live_vehicle_model.dart';
-import 'package:cordon_track_app/presentation/pages/live_map_page.dart';
-import 'package:cordon_track_app/presentation/widgets/vehicle_info_sheet.dart';
 import 'package:flutter/src/widgets/framework.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';

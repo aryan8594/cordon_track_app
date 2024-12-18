@@ -54,5 +54,6 @@ final dashboardProvider =
   final repository = ref.read(dashboardRepositoryProvider);
   final notifier = DashboardNotifier(repository);
   notifier.fetchDashboardData(); // Fetch data when initialized
+  ref.keepAlive(); // Prevent disposal until explicitly cleared
   return notifier;
 });

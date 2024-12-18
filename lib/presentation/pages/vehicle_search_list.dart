@@ -57,6 +57,7 @@ class _VehicleSearchListState extends ConsumerState<VehicleSearchList> {
     final vehicleData = ref.watch(liveVehicleProvider);
 
     return Scaffold(
+      // //colorScheme.secondary,
       appBar: AppBar(
         backgroundColor: Colors.white,
         leadingWidth: double.maxFinite,
@@ -72,7 +73,7 @@ class _VehicleSearchListState extends ConsumerState<VehicleSearchList> {
                         .read(vehicleSearchProvider.notifier)
                         .filterVehicles(query),
                     decoration: InputDecoration(
-                      hintText: 'Search by RTO',
+                      hintText: 'Search by RTO Number..',
                       prefixIcon: const Icon(Icons.search),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8.0),
@@ -94,6 +95,12 @@ class _VehicleSearchListState extends ConsumerState<VehicleSearchList> {
                   DropdownMenuItem(
                       value: 'stoppageTime>10800',
                       child: Text("Stoppage > 3 hrs")),
+                  DropdownMenuItem(
+                      value: 'panic',
+                      child: Text("Panic Pressed")),
+                  DropdownMenuItem(
+                      value: 'noGPS',
+                      child: Text("No GPS Coverage")),
                 ],
                 onChanged: (value) {
                   setState(() {
@@ -111,7 +118,27 @@ class _VehicleSearchListState extends ConsumerState<VehicleSearchList> {
       body: vehicleData.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) =>
-            Center(child: Text("Error: $e\n\nNO INTERNET CONNECTION")),
+           const Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Spacer(),
+                  Icon(
+                    Icons.signal_wifi_connected_no_internet_4_rounded,
+                    size: 200,
+                    color: Colors.redAccent,
+                  ),
+                  Text(
+                    "NO INTERNET\nAVAILABLE",
+                    style: TextStyle(
+                      fontSize: 30,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  Spacer()
+                ],
+              ),
         data: (vehicles) {
           if (vehicles == null || vehicles.isEmpty) {
             return const Center(child: Text("No vehicles found"));
@@ -136,15 +163,15 @@ class _VehicleSearchListState extends ConsumerState<VehicleSearchList> {
                 double? externalBatteryVoltage = vehicle.externalBatteryVoltage != null
                     ? double.tryParse(vehicle.externalBatteryVoltage!)
                     : null;
-                double? speed = vehicle.speed != null
-                    ? double.tryParse(vehicle.speed!)
-                    : null;
-                double? stoppageTime = vehicle.stoppageSince != null
-                    ? double.tryParse(vehicle.stoppageSince!)
-                    : null;
-                double? ideleSince = vehicle.idleSince != null
-                    ? double.tryParse(vehicle.idleSince!)
-                    : null; 
+                // double? speed = vehicle.speed != null
+                //     ? double.tryParse(vehicle.speed!)
+                //     : null;
+                // double? stoppageTime = vehicle.stoppageSince != null
+                //     ? double.tryParse(vehicle.stoppageSince!)
+                //     : null;
+                // double? ideleSince = vehicle.idleSince != null
+                //     ? double.tryParse(vehicle.idleSince!)
+                //     : null; 
                 return Card(
                   color: vehicle.panicStatus == "0"
                       ? Colors.white
@@ -153,6 +180,7 @@ class _VehicleSearchListState extends ConsumerState<VehicleSearchList> {
                       const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
                   child: ListTile(
                     leading: Column(
+                      crossAxisAlignment: CrossAxisAlignment.center,
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         vehicle.vType == "car"
@@ -164,12 +192,19 @@ class _VehicleSearchListState extends ConsumerState<VehicleSearchList> {
                                 : const Icon(Icons.directions_car,
                                     color: Colors.blue),
                         vehicle.panicStatus == "0"
-                            ? SizedBox()
-                            : Icon(
+                            ? const SizedBox()
+                            : const Icon(
                                 Icons.report_problem_rounded,
                                 color: Colors.redAccent,
                                 size: 25,
-                              )
+                              ),
+                        vehicle.gpsStatus == '1'
+                                ? const SizedBox()
+                                : const Icon(
+                                        Icons.gps_off_rounded,
+                                        size: 25,
+                                        color: Colors.redAccent,
+                                      ),
                       ],
                     ),
                     title: Row(
@@ -198,15 +233,15 @@ class _VehicleSearchListState extends ConsumerState<VehicleSearchList> {
                                   Icon(
                                     gsmSingnalStrength! > 18
                                         ? Icons.signal_cellular_alt_rounded
-                                        : gsmSingnalStrength! > 8
+                                        : gsmSingnalStrength > 8
                                             ? Icons
                                                 .signal_cellular_alt_2_bar_rounded
                                             : Icons
                                                 .signal_cellular_alt_1_bar_rounded,
                                     size: 25,
-                                    color: gsmSingnalStrength! > 18
+                                    color: gsmSingnalStrength > 18
                                         ? Colors.green
-                                        : gsmSingnalStrength! > 8
+                                        : gsmSingnalStrength > 8
                                             ? Colors.yellow
                                             : Colors.red,
                                   ),
@@ -217,26 +252,13 @@ class _VehicleSearchListState extends ConsumerState<VehicleSearchList> {
                     subtitle: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text("ID: ${vehicle.id ?? "Unknown"}"),
-                            vehicle.externalBatteryVoltage == null
-                                ? const SizedBox()
-                                : Row(
-                                    children: [
-                                      const Icon(
-                                        Icons.battery_charging_full_rounded,
-                                        size: 18,
-                                      ),
-                                      Text(
-                                        "${vehicle.externalBatteryVoltage} v",
-                                        style: const TextStyle(fontSize: 15),
-                                      )
-                                    ],
-                                  )
-                          ],
-                        ),
+                        // Row(
+                        //   mainAxisAlignment: MainAxisAlignment.end,
+                        //   children: [
+                        //     // Text("ID: ${vehicle.id ?? "Unknown"}"),
+                           
+                        //   ],
+                        // ),
                         Row(
                           children: [
                             Flexible(
@@ -249,6 +271,25 @@ class _VehicleSearchListState extends ConsumerState<VehicleSearchList> {
                                     fontSize: 12, color: Colors.grey),
                               ),
                             ),
+                             vehicle.externalBatteryVoltage == null
+                                ? const SizedBox()
+                                : Row(
+                                    children: [
+                                       Icon(
+                                        externalBatteryVoltage! > 10 
+                                        ?Icons.battery_charging_full_rounded
+                                        :Icons.battery_alert_rounded,
+                                        size: 18,
+                                        color: externalBatteryVoltage > 10
+                                        ?Colors.green
+                                        :Colors.redAccent,
+                                      ),
+                                      Text(
+                                        "${vehicle.externalBatteryVoltage} v",
+                                        style: const TextStyle(fontSize: 15),
+                                      )
+                                    ],
+                                  )
                           ],
                         ),
                         Row(
@@ -257,14 +298,14 @@ class _VehicleSearchListState extends ConsumerState<VehicleSearchList> {
                             vehicle.idleSince != "0" ||
                                     vehicle.idleSince == null
                                 ? Text(
-                                    "Idle Since: ${convertSecondsToHoursMinutes(vehicle.idleSince.toString())}",
+                                    "Idle Time: ${convertSecondsToHoursMinutes(vehicle.idleSince.toString() )}",
                                     style:
                                         const TextStyle(color: Colors.yellow),
                                   )
                                 : vehicle.stoppageSince != "0" ||
                                         vehicle.stoppageSince == null
                                     ? Text(
-                                        "Stoppage Since: ${convertSecondsToHoursMinutes(vehicle.stoppageSince.toString())}",
+                                        "Stoppage Time: ${convertSecondsToHoursMinutes(vehicle.stoppageSince.toString())}",
                                         style:
                                             const TextStyle(color: Colors.red),
                                       )
@@ -330,7 +371,8 @@ class _VehicleSearchListState extends ConsumerState<VehicleSearchList> {
                               crossAxisAlignment: CrossAxisAlignment.center,
                               children: [
                                 const Text(
-                                  "Stoppage Since",
+                                  
+                                  "Stoppage Time",
                                   style: TextStyle(
                                       fontSize: 12, color: Colors.grey),
                                 ),

@@ -1,18 +1,21 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'dart:async';
-import 'package:cordon_track_app/data/data_providers/immobalizer_create_provider.dart';
-import 'package:cordon_track_app/data/data_providers/immobalizer_list_provider.dart';
+import 'dart:developer';
+import 'package:cordon_track_app/data/data_providers/immobilizer_create_provider.dart';
+import 'package:cordon_track_app/data/data_providers/immobilizer_list_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class ImmobalizerListPage extends ConsumerStatefulWidget {
-  const ImmobalizerListPage({Key? key}) : super(key: key);
+class ImmobilizerListPage extends ConsumerStatefulWidget {
+  const ImmobilizerListPage({super.key});
 
   @override
-  ConsumerState<ImmobalizerListPage> createState() =>
-      _ImmobalizerListPageState();
+  ConsumerState<ImmobilizerListPage> createState() =>
+      _ImmobilizerListPageState();
 }
 
-class _ImmobalizerListPageState extends ConsumerState<ImmobalizerListPage> {
+class _ImmobilizerListPageState extends ConsumerState<ImmobilizerListPage> {
   late Timer _timer;
   final TextEditingController _searchController = TextEditingController();
   final ValueNotifier<String> _searchQuery = ValueNotifier<String>('');
@@ -22,7 +25,7 @@ class _ImmobalizerListPageState extends ConsumerState<ImmobalizerListPage> {
     super.initState();
     _timer = Timer.periodic(const Duration(seconds: 10), (_) {
       ref.invalidate(
-          immobalizerListProvider); // Refresh the list every 10 seconds
+          immobilizerListProvider); // Refresh the list every 10 seconds
     });
 
     _searchController.addListener(() {
@@ -39,11 +42,13 @@ class _ImmobalizerListPageState extends ConsumerState<ImmobalizerListPage> {
 
   @override
   Widget build(BuildContext context) {
-    final immobalizerListAsyncValue = ref.watch(immobalizerListProvider);
+    final immobilizerListAsyncValue = ref.watch(immobilizerListProvider);
 
     return Scaffold(
+      // //colorScheme.secondary,
       appBar: AppBar(
-        title: const Text('Immobalizer List'),
+        // //colorScheme.primary,
+        title: const Text('Immobilizer List'),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(50),
           child: Padding(
@@ -51,7 +56,7 @@ class _ImmobalizerListPageState extends ConsumerState<ImmobalizerListPage> {
             child: TextField(
               controller: _searchController,
               decoration: InputDecoration(
-                hintText: 'Search by RTO',
+                hintText: 'Search by RTO Number..',
                 prefixIcon: const Icon(Icons.search),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
@@ -64,9 +69,9 @@ class _ImmobalizerListPageState extends ConsumerState<ImmobalizerListPage> {
           ),
         ),
       ),
-      body: immobalizerListAsyncValue.when(
-        data: (immobalizerList) {
-          final dataList = immobalizerList?.data ?? [];
+      body: immobilizerListAsyncValue.when(
+        data: (immobilizerList) {
+          final dataList = immobilizerList?.data ?? [];
           if (dataList.isEmpty) {
             return const Center(child: Text('No data available'));
           }
@@ -105,9 +110,9 @@ class _ImmobalizerListPageState extends ConsumerState<ImmobalizerListPage> {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                             children: [
-                              _buildImmobalizerButton(context, ref, data.imei!,
+                              _buildImmobilizerButton(context, ref, data.imei!,
                                   'stop', 'Immobilize'),
-                              _buildImmobalizerButton(context, ref, data.imei!,
+                              _buildImmobilizerButton(context, ref, data.imei!,
                                   'start', 'Mobilize'),
                             ],
                           ),
@@ -122,12 +127,32 @@ class _ImmobalizerListPageState extends ConsumerState<ImmobalizerListPage> {
         },
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, stackTrace) =>
-            Center(child: Text('Error: ${error.toString()}')),
+            const Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Spacer(),
+                  Icon(
+                    Icons.signal_wifi_connected_no_internet_4_rounded,
+                    size: 200,
+                    color: Colors.redAccent,
+                  ),
+                  Text(
+                    "NO INTERNET\nAVAILABLE",
+                    style: TextStyle(
+                      fontSize: 30,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  Spacer()
+                ],
+              ),
       ),
     );
   }
 
-  Widget _buildImmobalizerButton(
+  Widget _buildImmobilizerButton(
     BuildContext context, WidgetRef ref, String imei, String event, String action) {
   return InkWell(
     onTap: () async {
@@ -151,7 +176,7 @@ class _ImmobalizerListPageState extends ConsumerState<ImmobalizerListPage> {
       );
 
       if (confirmed == true) {
-        _handleImmobalizerAction(
+        _handleImmobilizerAction(
           context: context,
           ref: ref,
           imei: imei,
@@ -172,13 +197,13 @@ class _ImmobalizerListPageState extends ConsumerState<ImmobalizerListPage> {
   );
 }
 
-void _handleImmobalizerAction({
+void _handleImmobilizerAction({
   required BuildContext context,
   required WidgetRef ref,
   required String imei,
   required String event,
 }) async {
-  final repository = ref.read(immobalizerCreateRepoProvider);
+  final repository = ref.read(immobilizerCreateRepoProvider);
 
   // Show a loading indicator during the API call
   showDialog(
@@ -191,10 +216,10 @@ void _handleImmobalizerAction({
 
   try {
     // Make the API call
-    final response = await repository.fetchImmobalizerCreate(imei, event);
+    final response = await repository.fetchImmobilizerCreate(imei, event);
 
     // Log response for debugging
-    print("Immobalizer Response: $response");
+    log("Immobilizer Response: $response");
 
     // Dismiss the loading dialog
     Navigator.of(context).pop();

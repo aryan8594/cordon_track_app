@@ -1,3 +1,5 @@
+// ignore_for_file: library_private_types_in_public_api
+
 import 'dart:developer';
 import 'package:board_datetime_picker/board_datetime_picker.dart';
 import 'package:cordon_track_app/business_logic/search_query_provider.dart';
@@ -7,7 +9,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class GeofenceReportPage extends ConsumerStatefulWidget {
-  const GeofenceReportPage({Key? key}) : super(key: key);
+  const GeofenceReportPage({super.key});
 
   @override
   _GeofenceReportState createState() => _GeofenceReportState();
@@ -27,7 +29,9 @@ class _GeofenceReportState extends ConsumerState<GeofenceReportPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      //colorScheme.secondary,
       appBar: AppBar(
+        //colorScheme.primary,
         title: const Text("Geofece Report"),
         bottom: PreferredSize(
             preferredSize: const Size.fromHeight(10), child: Container()),
@@ -67,7 +71,7 @@ class _GeofenceReportState extends ConsumerState<GeofenceReportPage> {
                       decoration: BoxDecoration(
                         color: Colors.white.withOpacity(0.95),
                         borderRadius: BorderRadius.circular(5),
-                        boxShadow: [
+                        boxShadow: const [
                           BoxShadow(color: Colors.black12, blurRadius: 4),
                         ],
                       ),
@@ -98,7 +102,7 @@ class _GeofenceReportState extends ConsumerState<GeofenceReportPage> {
                               index - 1]; // Adjust index for the "ALL" option
                           return ListTile(
                             title: Text(vehicle.rto ?? 'Unknown RTO'),
-                            subtitle: Text('Vehicle ID: ${vehicle.id}'),
+                            // subtitle: Text('Vehicle ID: ${vehicle.id}'),
                             onTap: () {
                               vehicleName = vehicle.rto ?? '';
                               textController.text =
@@ -175,9 +179,7 @@ class _GeofenceReportState extends ConsumerState<GeofenceReportPage> {
                   // Fetch Data Button
                   ElevatedButton(
                     onPressed: () async {
-                      if (fromDate != null &&
-                          toDate != null &&
-                          vehicleID != null) {
+                      if (vehicleID != null) {
                         ref
                             .read(geofenceReportProvider.notifier)
                             .fetchGeofenceReport(
@@ -195,7 +197,7 @@ class _GeofenceReportState extends ConsumerState<GeofenceReportPage> {
                         log("Missing vehicle ID or date range");
                       }
                     },
-                    child: const Text("Fetch Geofence Report"),
+                    child: const Text("Fetch Geofence Report", style: TextStyle(color: Colors.black),),
                   ),
                 ],
               ),
@@ -294,7 +296,7 @@ class _GeofenceReportState extends ConsumerState<GeofenceReportPage> {
                 setState(() {
                   fromDate =
                       DateUtil.startOfWeek().subtract(const Duration(days: 7));
-                  toDate = fromDate!.add(const Duration(days: 7));
+                  toDate = fromDate.add(const Duration(days: 7));
                   selectedRange = 'Last Week';
                 });
                 Navigator.pop(context);

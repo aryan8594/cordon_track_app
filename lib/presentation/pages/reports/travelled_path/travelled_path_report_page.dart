@@ -2,24 +2,25 @@ import 'dart:developer';
 
 import 'package:board_datetime_picker/board_datetime_picker.dart';
 import 'package:cordon_track_app/business_logic/search_query_provider.dart';
-import 'package:cordon_track_app/business_logic/vehicle_search_provider.dart';
 import 'package:cordon_track_app/data/data_providers/reports/travelled_path_provider.dart';
 import 'package:cordon_track_app/presentation/pages/reports/travelled_path/travelled_path_result.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:data_table_2/data_table_2.dart';
 
 class TravelledPathPage extends ConsumerStatefulWidget {
-  const TravelledPathPage({Key? key}) : super(key: key);
+  const TravelledPathPage({super.key});
 
   @override
+  // ignore: library_private_types_in_public_api
   _TravelledPathPageState createState() => _TravelledPathPageState();
 }
 
 class _TravelledPathPageState extends ConsumerState<TravelledPathPage> {
   DateTime today = DateTime.now();
-  DateTime fromDate = DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day, 0, 0, 0);
-  DateTime toDate = DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day, 23, 59, 59);
+  DateTime fromDate = DateTime(
+      DateTime.now().year, DateTime.now().month, DateTime.now().day, 0, 0, 0);
+  DateTime toDate = DateTime(DateTime.now().year, DateTime.now().month,
+      DateTime.now().day, 23, 59, 59);
   String? timeDifference;
   String selectedRange = 'Today';
   String? vehicleID;
@@ -27,10 +28,12 @@ class _TravelledPathPageState extends ConsumerState<TravelledPathPage> {
 
   @override
   Widget build(BuildContext context) {
-    final travelledPathState = ref.watch(travelledPathProvider);
+    ref.watch(travelledPathProvider);
 
     return Scaffold(
+      // backgroundColor: Theme.of(context).//colorScheme.secondary,
       appBar: AppBar(
+        // backgroundColor: Theme.of(context).//colorScheme.primary,
         title: const Text("Travelled Path Report"),
         bottom: PreferredSize(
             preferredSize: const Size.fromHeight(10), child: Container()),
@@ -48,7 +51,12 @@ class _TravelledPathPageState extends ConsumerState<TravelledPathPage> {
                 children: [
                   // Search Field for Vehicles
                   TextField(
+                    cursorColor: Colors.black,
                     decoration: InputDecoration(
+                      focusColor: Colors.pink,
+                      prefixStyle: TextStyle(color: Colors.pink),
+                      hintStyle: TextStyle(color: Colors.pink),
+                      labelStyle: TextStyle(color: Colors.black),
                       labelText:
                           vehicleID != null ? vehicleName : 'Search Vehicle',
                       border: OutlineInputBorder(
@@ -70,7 +78,7 @@ class _TravelledPathPageState extends ConsumerState<TravelledPathPage> {
                       decoration: BoxDecoration(
                         color: Colors.white.withOpacity(0.95),
                         borderRadius: BorderRadius.circular(5),
-                        boxShadow: [
+                        boxShadow: const [
                           BoxShadow(color: Colors.black12, blurRadius: 4),
                         ],
                       ),
@@ -84,7 +92,7 @@ class _TravelledPathPageState extends ConsumerState<TravelledPathPage> {
                                 final vehicle = filteredVehicles[index];
                                 return ListTile(
                                   title: Text(vehicle.rto ?? 'Unknown RTO'),
-                                  subtitle: Text('Vehicle ID: ${vehicle.id}'),
+                                  // subtitle: Text('Vehicle ID: ${vehicle.id}'),
                                   onTap: () {
                                     // Populate the search text field with the RTO
                                     vehicleName = vehicle.rto ?? '';
@@ -106,6 +114,11 @@ class _TravelledPathPageState extends ConsumerState<TravelledPathPage> {
                   DropdownButtonFormField<String>(
                     value: timeDifference, // Bind the currently selected value
                     decoration: InputDecoration(
+                      fillColor: Colors.pink,
+                      focusColor: Colors.pink,
+                      prefixStyle: TextStyle(color: Colors.pink),
+                      hintStyle: TextStyle(color: Colors.pink),
+                      labelStyle: TextStyle(color: Colors.black),
                       labelText: 'Time Difference',
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8.0),
@@ -172,27 +185,30 @@ class _TravelledPathPageState extends ConsumerState<TravelledPathPage> {
                   // Fetch Data Button
                   ElevatedButton(
                     onPressed: () async {
-                      if (fromDate != null &&
-                          toDate != null &&
-                          vehicleID != null) {
+                      // ignore: unnecessary_null_comparison
+                      if (fromDate != null && vehicleID != null) {
                         ref
                             .read(travelledPathProvider.notifier)
                             .fetchTravelledPath(
                               id: vehicleID!, // Use selected vehicle ID
-                              fromDate: fromDate!,
-                              toDate: toDate!,
+                              fromDate: fromDate,
+                              toDate: toDate,
                               timeDifference: timeDifference ?? "",
                             );
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                              builder: (context) => TravelledPathResult()),
+                              builder: (context) =>
+                                  const TravelledPathResult()),
                         );
                       } else {
                         log("Missing vehicle ID or date range");
                       }
                     },
-                    child: const Text("Fetch Travelled Path"),
+                    child: const Text(
+                      "Fetch Travelled Path",
+                      style: TextStyle(color: Colors.black),
+                    ),
                   ),
                 ],
               ),
@@ -291,7 +307,7 @@ class _TravelledPathPageState extends ConsumerState<TravelledPathPage> {
                 setState(() {
                   fromDate =
                       DateUtil.startOfWeek().subtract(const Duration(days: 7));
-                  toDate = fromDate!.add(const Duration(days: 7));
+                  toDate = fromDate.add(const Duration(days: 7));
                   selectedRange = 'Last Week';
                 });
                 Navigator.pop(context);
@@ -375,8 +391,8 @@ class _TravelledPathPageState extends ConsumerState<TravelledPathPage> {
                   toDate = pickedDates.end;
                   ref.read(travelledPathProvider.notifier).fetchTravelledPath(
                         id: vehicleID!,
-                        fromDate: fromDate!,
-                        toDate: toDate!,
+                        fromDate: fromDate,
+                        toDate: toDate,
                         timeDifference: timeDifference!,
                       );
                   log("dates selected $pickedDates");

@@ -1,3 +1,5 @@
+// ignore_for_file: unnecessary_new, prefer_collection_literals, unnecessary_this
+
 class GeofenceReportModel {
   bool? status;
   String? message;
@@ -272,7 +274,7 @@ class History {
 
     // Safely parse `distance` for both String and num types
     if (json['distance'] is String) {
-      distance = num.tryParse(json['distance']) ?? null;
+      distance = num.tryParse(json['distance']);
     } else if (json['distance'] is num) {
       distance = json['distance'];
     } else {
